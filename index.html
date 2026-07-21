@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>魔法花花獅圖鑑：探索你魔法潛力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#163849;
+    --outer-bg:#132028;
+    --parchment:#f3ecd9;
+    --parchment-dim:#c9c0a6;
+    --gold:#f5e7a6;
+    --title-teal:#F3E8AE;
+    --block-bg:#225772;
+    --bar-bg:#234456;
+
+    --font-display:'Noto Sans TC',sans-serif;
+    --font-body:'Noto Sans TC',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    position:relative;
+    min-height:100dvh;
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+    overflow:hidden;
+    background:var(--bg-deep);
+    color:var(--parchment);
+    font-family:var(--font-body);
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ---------- 背景（#163849，延伸至平板/桌面兩側） ---------- */
+  .forest-bg{
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(60% 45% at 20% 10%, rgba(255,255,255,0.04), transparent 60%),
+      radial-gradient(60% 50% at 85% 90%, rgba(255,255,255,0.03), transparent 60%),
+      var(--outer-bg);
+  }
+  .firefly{
+    position:fixed; border-radius:50%; z-index:1; pointer-events:none;
+    background:var(--gold); box-shadow:0 0 8px 2px rgba(227,174,83,.9);
+    opacity:.6; animation:drift 7s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%,100%{ transform:translate(0,0); opacity:.25; }
+    50%{ transform:translate(6px,-14px); opacity:.7; }
+  }
+
+  /* ---------- App shell：手機為主，平板/桌面以背景色延伸 ---------- */
+  .app-shell{
+    position:relative; z-index:2;
+    width:100%; max-width:430px;
+    height:100dvh;
+    display:flex; flex-direction:column;
+    background:var(--bg-deep);
+    overflow:hidden;
+    isolation:isolate;
+  }
+  @media (min-width:431px){
+    .app-shell{
+      margin:28px 0; height:calc(100dvh - 56px);
+      border-radius:26px;
+      box-shadow:
+        0 0 60px rgba(0,0,0,.4),
+        0 0 140px rgba(0,0,0,.25);
+    }
+  }
+
+  .screen-stack{ position:relative; flex:1; min-height:0; }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    padding:22px 22px 26px;
+    opacity:0; transform:scale(.98);
+    pointer-events:none;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+  .screen.active{ opacity:1; transform:scale(1); pointer-events:auto; }
+
+  /* ---------- 起始畫面：Hero 全螢幕，文字浮在中下方 ---------- */
+  #screen-start{ padding:0; text-align:center; }
+
+  .hero-media-wrap{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    overflow:hidden;
+    background:#0a2733;
+  }
+  .hero-media-wrap video,
+  .hero-media-wrap img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  }
+  .hero-placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    padding:24px; text-align:center;
+    background:repeating-linear-gradient(135deg, rgba(255,255,255,.04) 0 12px, rgba(255,255,255,.01) 12px 24px);
+  }
+
+  .start-overlay{
+    position:absolute; inset:0; z-index:1;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  .start-scrim{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(to top,
+      rgba(15,51,67,.96) 0%,
+      rgba(15,51,67,.82) 30%,
+      rgba(15,51,67,.35) 62%,
+      rgba(15,51,67,0) 85%);
+  }
+  .start-spark{ position:absolute; z-index:2; opacity:.9; pointer-events:none; }
+  .start-spark.sp1{ top:5%; left:6%; width:22px; }
+  .start-spark.sp2{ top:9%; right:8%; width:14px; }
+
+  .start-text{
+    position:relative; z-index:1;
+    padding:0 26px 8px;
+  }
+  h1.title{
+    font-family:var(--font-display); font-weight:900;
+    font-size:clamp(23px, 4.4vh, 30px); line-height:1.34; margin:0 0 14px;
+    color:var(--title-teal);
+  }
+  h1.title .line2{ font-weight:900; margin-top:4px; }
+  .quote-block{ margin:0 auto 20px; max-width:280px; }
+  .wave-line{ display:block; width:170px; height:9px; margin:0 auto; opacity:.55; }
+  .lede-quote{
+    font-size:13px; line-height:1.55; color:#ffffff; font-weight:500;
+    margin:8px 0;
+  }
+  .lede{
+    font-size:13px; line-height:1.5; color:#ffffff; font-weight:500;
+    max-width:300px; margin:0 auto 14px;
+  }
+  .lede2{
+    font-size:13px; line-height:1.5; color:#ffffff; font-weight:500;
+    max-width:280px; margin:0 auto;
+  }
+  .start-cta{
+    position:relative; z-index:1;
+    flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+    padding:18px 26px 30px;
+  }
+  .btn-primary{
+    font-family:var(--font-body); font-weight:700; font-size:14px;
+    color:var(--parchment); background:var(--block-bg);
+    border:none; border-radius:999px; padding:11px 36px;
+    cursor:pointer; letter-spacing:.03em;
+    transition:transform .15s ease, background-color .3s ease, color .3s ease;
+  }
+  .btn-primary:hover{ background-color:#F3E8AE; color:var(--bg-deep); }
+  .btn-primary:active{ transform:scale(.96); }
+
+  /* ---------- 測驗畫面：全螢幕背景 + 簡潔直線進度 + 4 選項 ---------- */
+  #screen-quiz{ padding:0; }
+  .quiz-content{
+    position:absolute; inset:0;
+    transition:opacity .22s ease;
+  }
+  .quiz-content.fading{ opacity:0; }
+
+  .quiz-media-wrap{
+    position:absolute; inset:0; width:100%; height:100%;
+    overflow:hidden; background:#0a2733;
+  }
+  .quiz-media-wrap video,
+  .quiz-media-wrap img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  }
+  .quiz-placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    padding:24px; text-align:center;
+    background:repeating-linear-gradient(135deg, rgba(255,255,255,.04) 0 12px, rgba(255,255,255,.01) 12px 24px);
+  }
+
+  .quiz-overlay{
+    position:absolute; inset:0; z-index:1;
+    display:flex; flex-direction:column;
+    padding:18px 20px 22px;
+  }
+  .quiz-scrim-top{
+    position:absolute; top:0; left:0; right:0; height:34%; z-index:0; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(15,51,67,.85) 0%, rgba(15,51,67,0) 100%);
+  }
+  .quiz-scrim-bottom{
+    position:absolute; bottom:0; left:0; right:0; height:56%; z-index:0; pointer-events:none;
+    background:linear-gradient(to top, rgba(15,51,67,.92) 0%, rgba(15,51,67,.55) 45%, rgba(15,51,67,0) 100%);
+  }
+
+  .progress-wrap{ position:relative; z-index:1; flex-shrink:0; }
+  .progress-label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:11.5px; color:var(--parchment-dim); margin-bottom:8px; letter-spacing:.05em;
+  }
+  .progress-label b{ color:var(--gold); font-weight:700; }
+  .progress-line-wrap{ position:relative; height:18px; }
+  .progress-line-bg{
+    position:absolute; top:50%; left:2%; right:2%; height:2px;
+    background:rgba(243,236,217,.28); transform:translateY(-50%); border-radius:2px;
+  }
+  .progress-line-fill{
+    position:absolute; top:50%; left:2%; height:2px; width:0%;
+    background:var(--gold); transform:translateY(-50%); border-radius:2px;
+    transition:width .3s ease;
+  }
+  .progress-star{
+    position:absolute; top:50%; width:13px; height:13px;
+    transform:translate(-50%,-50%); transition:opacity .3s ease, transform .3s ease;
+  }
+  .progress-star.todo{ opacity:.4; }
+  .progress-star.done{ opacity:1; }
+  .progress-star.now{ opacity:1; transform:translate(-50%,-50%) scale(1.35); filter:drop-shadow(0 0 5px rgba(227,174,83,.85)); }
+
+  .q-body{
+    position:relative; z-index:1;
+    flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-end;
+    align-items:center;
+    padding:10px 2px 0;
+  }
+  .q-text{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(16px, 3vh, 19px); line-height:1.5;
+    color:var(--parchment);
+    text-shadow:0 2px 14px rgba(0,0,0,.4);
+    text-align:center;
+    max-width:92%;
+    margin:0 auto;
+  }
+  .options{
+    position:relative; z-index:1; flex-shrink:0;
+    display:flex; flex-direction:column; gap:9px;
+    margin-top:28px;
+  }
+  .opt-btn{
+    text-align:left; font-family:var(--font-body); font-size:13.5px; line-height:1.4;
+    color:var(--parchment); background:var(--block-bg);
+    border:none; border-radius:14px;
+    padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:10px;
+    transition:background .15s, transform .12s;
+  }
+  .opt-btn:active{ transform:scale(.97); background:var(--bar-bg); }
+  .opt-glyph{ flex-shrink:0; width:16px; height:16px; opacity:.9; }
+
+  /* ---------- 結果畫面 ---------- */
+  #screen-result{ padding:0; }
+
+  .res-header{
+    flex-shrink:0; width:100%; text-align:center;
+    background:transparent; color:var(--parchment);
+    font-weight:700; font-size:13px; letter-spacing:.03em;
+    padding:13px 16px;
+  }
+  .deco-star{ position:absolute; z-index:3; pointer-events:none; }
+  .deco-star img{ width:100%; height:100%; object-fit:contain; display:block; }
+  #deco-star-1{ top:6%; left:-4%; width:15%; aspect-ratio:1/1; }
+  #deco-star-2{ top:33%; right:-4%; width:13%; aspect-ratio:1/1; }
+  #deco-star-3{ bottom:8%; right:-3%; width:14%; aspect-ratio:1/1; }
+  .res-footer{
+    flex-shrink:0; width:100%; text-align:center;
+    background:var(--block-bg); color:var(--parchment-dim);
+    font-size:10px; letter-spacing:.08em;
+    padding:9px 16px;
+  }
+
+  .res-body{
+    flex:1; min-height:0; display:flex; flex-direction:column; gap:8px;
+    padding:12px 22px 8px; overflow:hidden;
+  }
+
+  .res-hero-row{ flex-shrink:0; display:flex; gap:14px; align-items:flex-start; justify-content:center; margin-bottom:12px; }
+  .res-hero-left{ position:relative; width:34%; max-width:150px; flex-shrink:0; }
+  .res-portrait{
+    position:relative; width:100%; aspect-ratio:3/4; border-radius:18px; overflow:hidden;
+    background:transparent;
+  }
+  .emoji-fallback{
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  }
+  .res-portrait .emoji-fallback{ font-size:48px; }
+  .res-portrait img, .res-portrait video{ width:100%; height:100%; object-fit:cover; display:block; }
+
+  .res-hero-right{
+    flex:0 1 auto; max-width:52%; min-width:0; align-self:stretch; display:flex; flex-direction:column;
+    align-items:flex-start; justify-content:center; text-align:left;
+  }
+  .res-tagline{ font-size:11px; line-height:1.4; color:var(--parchment); margin-bottom:16px; }
+  .res-name{
+    font-family:var(--font-display); font-weight:900; color:var(--gold);
+    font-size:clamp(19px, 3.6vh, 25px); line-height:1.4; margin:0 0 16px;
+  }
+  .res-tags{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+  .tag-row{ display:flex; gap:6px; justify-content:flex-start; }
+  .res-tag{
+    font-size:10px; min-width:6.2em; padding:3px 6px; border-radius:999px; white-space:nowrap;
+    text-align:center; background:var(--parchment); color:var(--bg-deep); font-weight:700;
+  }
+
+  .res-block{
+    flex-shrink:0; background:var(--block-bg); border-radius:14px; padding:9px 10px;
+    display:flex; gap:8px; align-items:stretch;
+  }
+  .res-block-title{
+    flex-shrink:0; writing-mode:vertical-rl; text-orientation:upright;
+    font-size:10px; letter-spacing:.14em; color:var(--gold); font-weight:700;
+    padding-right:7px; border-right:1px solid rgba(255,255,255,.14);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .res-block-content{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; }
+  #res-block-desc p{
+    font-size:10.5px; line-height:1.5; color:var(--parchment); margin:0;
+    display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
+  }
+
+  .res-stats{ display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; }
+  .stat-row{ font-size:10px; display:flex; align-items:center; gap:6px; }
+  .stat-row .lbl{ color:var(--parchment); flex-shrink:0; white-space:nowrap; }
+  .stat-bar{
+    flex:0 0 auto; width:92px; height:8px; border-radius:5px; background:rgba(255,255,255,.12); overflow:hidden;
+  }
+  .stat-fill{
+    height:100%; border-radius:5px; width:0%;
+    background:linear-gradient(90deg, #5be0ff, #7affc4);
+    box-shadow:0 0 6px rgba(122,255,196,.7);
+    transition:width .5s ease;
+  }
+
+  .res-relations{ flex:1; min-height:0; display:flex; gap:8px; }
+  .res-rel-card{
+    flex:1; min-width:0; background:var(--block-bg); border-radius:14px;
+    padding:9px 8px; display:flex; flex-direction:column;
+  }
+  .res-rel-label{ font-size:9.5px; letter-spacing:.12em; color:var(--gold); font-weight:700; margin-bottom:6px; text-align:center; }
+  .res-rel-pair{ flex:1; min-height:0; display:flex; align-items:stretch; justify-content:center; gap:8px; }
+  .res-rel-thumb{
+    flex:1; min-width:0; border-radius:10px; overflow:hidden; background:transparent;
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .res-rel-thumb img, .res-rel-thumb video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .res-rel-names{ display:flex; justify-content:space-between; gap:4px; margin-top:6px; }
+  .res-rel-names span{
+    flex:1; min-width:0; font-size:9.5px; text-align:center; color:var(--parchment); font-weight:700;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+
+  .res-actions{ flex-shrink:0; display:flex; gap:10px; padding:4px 0 2px; }
+  .btn-ghost, .btn-share{
+    flex:1; text-align:center; font-weight:500; font-size:11px;
+    padding:4px 10px; border-radius:999px; cursor:pointer; border:none;
+    color:var(--parchment); background:transparent; transition:transform .12s, color .25s ease;
+  }
+  .btn-ghost::before, .btn-share::before{
+    content:'✦'; display:inline-block; margin-right:4px;
+    color:var(--gold); opacity:0; transition:opacity .25s ease;
+  }
+  .btn-ghost:hover, .btn-share:hover{ color:var(--gold); }
+  .btn-ghost:hover::before, .btn-share:hover::before{ opacity:1; }
+  .btn-ghost:active,.btn-share:active{ transform:scale(.96); }
+
+  @media (prefers-reduced-motion:reduce){
+    .firefly{ animation:none; }
+    .screen{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="sparkleShape" d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z"/>
+    <path id="waveShape" d="M0,6 Q4,0 8,6 T16,6 T24,6 T32,6 T40,6 T48,6 T56,6 T64,6 T72,6 T80,6 T88,6 T96,6 T104,6 T112,6 T120,6 T128,6 T136,6 T144,6 T152,6 T160,6 T168,6 T176,6 T184,6 T192,6 T200,6" fill="none"/>
+  </defs>
+</svg>
+
+<div class="forest-bg"></div>
+<div id="fireflies"></div>
+
+<div class="app-shell">
+  <div class="screen-stack">
+
+    <!-- 起始畫面 -->
+    <section class="screen active" id="screen-start">
+      <div class="hero-media-wrap" id="hero-media-wrap">
+        <div class="hero-placeholder" id="hero-placeholder">
+        </div>
+      </div>
+
+      <div class="start-overlay">
+        <div class="start-scrim"></div>
+        <svg class="start-spark sp1" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#ffffff"/></svg>
+        <svg class="start-spark sp2" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#ffffff"/></svg>
+
+        <div class="start-text">
+          <h1 class="title">
+            <div>魔法花花獅圖鑑</div>
+            <div class="line2">探索你魔法潛力</div>
+          </h1>
+          <div class="quote-block">
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="#F3E8AE" stroke-width="1.5"/></svg>
+            <p class="lede-quote">真正的魔法獅 會在森林深處<br>找到屬於自己的魔法</p>
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="#F3E8AE" stroke-width="1.5"/></svg>
+          </div>
+          <p class="lede">你站在魔法森林的入口<br>一塊覆滿藤蔓的古老木牌上這麼寫著</p>
+          <p class="lede2">微風吹過，森林裡傳來奇妙的聲音<br>你的冒險，即將開始</p>
+        </div>
+
+        <div class="start-cta">
+          <button class="btn-primary" id="btn-start">點擊開始</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 測驗畫面 -->
+    <section class="screen" id="screen-quiz">
+      <div class="quiz-content" id="quiz-content">
+        <div class="quiz-media-wrap" id="quiz-media-wrap">
+          <div class="quiz-placeholder" id="quiz-placeholder">
+          </div>
+        </div>
+        <div class="quiz-overlay">
+          <div class="quiz-scrim-top"></div>
+          <div class="quiz-scrim-bottom"></div>
+
+          <div class="progress-wrap">
+            <div class="progress-label"><span>森林之路</span><span><b id="q-index">1</b> / 10 章</span></div>
+            <div class="progress-line-wrap" id="progress-track"></div>
+          </div>
+          <div class="q-body">
+            <div class="q-text" id="q-text"></div>
+          </div>
+          <div class="options" id="q-options"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 結果畫面 -->
+    <section class="screen" id="screen-result">
+      <div class="res-header">你感受到魔法正在甦醒 你成為了一隻…</div>
+
+      <div class="deco-star" id="deco-star-1"></div>
+      <div class="deco-star" id="deco-star-2"></div>
+      <div class="deco-star" id="deco-star-3"></div>
+
+      <div class="res-body">
+        <div class="res-hero-row">
+          <div class="res-hero-left">
+            <div class="res-portrait" id="res-portrait"></div>
+          </div>
+          <div class="res-hero-right">
+            <div class="res-name" id="res-name"></div>
+            <div class="res-tagline" id="res-tagline"></div>
+            <div class="res-tags" id="res-tags"></div>
+          </div>
+        </div>
+
+        <div class="res-block" id="res-block-desc">
+          <div class="res-block-title">觀察筆記</div>
+          <div class="res-block-content"><p id="res-desc"></p></div>
+        </div>
+
+        <div class="res-block" id="res-block-stats">
+          <div class="res-block-title">魔法能量</div>
+          <div class="res-block-content"><div class="res-stats" id="res-stats"></div></div>
+        </div>
+
+        <div class="res-relations">
+          <div class="res-rel-card">
+            <div class="res-rel-label">與你共鳴的魔法</div>
+            <div class="res-rel-pair">
+              <div class="res-rel-thumb" id="res-rel-attract-1"></div>
+              <div class="res-rel-thumb" id="res-rel-attract-2"></div>
+            </div>
+            <div class="res-rel-names">
+              <span id="res-rel-attract-1-name"></span>
+              <span id="res-rel-attract-2-name"></span>
+            </div>
+          </div>
+          <div class="res-rel-card">
+            <div class="res-rel-label">與你遙望的魔法</div>
+            <div class="res-rel-pair">
+              <div class="res-rel-thumb" id="res-rel-clash-1"></div>
+              <div class="res-rel-thumb" id="res-rel-clash-2"></div>
+            </div>
+            <div class="res-rel-names">
+              <span id="res-rel-clash-1-name"></span>
+              <span id="res-rel-clash-2-name"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="res-actions" id="res-actions">
+          <button class="btn-ghost" id="btn-restart">再測一次</button>
+          <button class="btn-share" id="btn-save">領取魔法獅檔案</button>
+        </div>
+      </div>
+
+      <div class="res-footer">小女孩和花花獅工作室 © PLUDDIE STUDIO</div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- 共用工具：依序嘗試 mp4 → jpg/jpeg/png/webp，載入第一個存在的檔案 ---------------- */
+  var IMG_EXTS = ['jpg', 'jpeg', 'png', 'webp'];
+
+  function buildMediaCandidates(basePath, includeVideo){
+    var list = includeVideo ? [{type:'video', src: basePath + '.mp4'}] : [];
+    IMG_EXTS.forEach(function(ext){ list.push({type:'image', src: basePath + '.' + ext}); });
+    return list;
+  }
+
+  function loadFirstMedia(candidates, onReady, onExhausted){
+    var i = 0;
+    (function tryNext(){
+      if(i >= candidates.length){ if(onExhausted) onExhausted(); return; }
+      var c = candidates[i++];
+      if(c.type === 'video'){
+        var v = document.createElement('video');
+        v.muted = true; v.playsInline = true; v.loop = true; v.autoplay = true;
+        v.setAttribute('webkit-playsinline', '');
+        v.addEventListener('loadeddata', function(){
+          onReady(v);
+          v.play().catch(function(){});
+        });
+        v.addEventListener('error', tryNext);
+        v.src = c.src;
+        v.load();
+      } else {
+        var img = new Image();
+        img.addEventListener('load', function(){ onReady(img); });
+        img.addEventListener('error', tryNext);
+        img.src = c.src;
+      }
+    })();
+  }
+
+  /* ---------------- 起始頁 Hero 圖片/影片載入 ---------------- */
+  (function initHeroMedia(){
+    var wrap = document.getElementById('hero-media-wrap');
+    var placeholder = document.getElementById('hero-placeholder');
+    loadFirstMedia(buildMediaCandidates('img/hero', true), function(media){
+      if(placeholder) placeholder.remove();
+      media.alt = '魔法森林入口';
+      wrap.insertBefore(media, wrap.firstChild);
+    });
+  })();
+
+  /* ---------------- 結果頁裝飾星星（純裝飾，沒放圖就維持空白） ---------------- */
+  (function initDecoStars(){
+    ['deco-star-1', 'deco-star-2', 'deco-star-3'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      loadFirstMedia(buildMediaCandidates('img/' + id, false), function(media){
+        media.alt = '';
+        el.appendChild(media);
+      });
+    });
+  })();
+
+  /* ---------------- 資料設定：新版 4 軸 8 屬性計分系統 ---------------- */
+  /* 充電方式：light 光芒 / moon 月光　行動模式：burst 爆發 / sustain 蓄力
+     思考方式：fantasy 幻想 / analysis 分析　人生態度：explore 探索 / guardian 守護 */
+
+  var QUESTIONS = [
+    { q:"深夜的森林裡忽然亮起一道光<br>你會",
+      opts:[ {t:"立刻衝過去感受那股光的溫度", attr:"light"}, {t:"先蹲下來，安靜等光靠近你", attr:"sustain"},
+             {t:"觀察光的規律，猜測它的來源", attr:"analysis"}, {t:"先確認同伴都在身邊再一起靠近", attr:"guardian"} ] },
+    { q:"一隻迷路的小狐狸抬頭看著你<br>你會",
+      opts:[ {t:"在月光下靜靜陪牠坐一會兒", attr:"moon"}, {t:"立刻抱起牠衝回營地", attr:"burst"},
+             {t:"想像牠是來自星星的使者", attr:"fantasy"}, {t:"跟著牠走走看牠想帶你去哪", attr:"explore"} ] },
+    { q:"你發現一本會自己翻頁的魔法書<br>你會",
+      opts:[ {t:"迫不及待翻開它感受書裡的光", attr:"light"}, {t:"把書放著，讓它自己慢慢翻完", attr:"sustain"},
+             {t:"仔細研究書頁上符文的構造", attr:"analysis"}, {t:"先確認這本書不會傷到誰", attr:"guardian"} ] },
+    { q:"森林深處傳來奇怪又美麗的歌聲<br>你會",
+      opts:[ {t:"閉上眼睛安靜聆聽歌聲裡的情緒", attr:"moon"}, {t:"立刻衝過去找出聲音的來源", attr:"burst"},
+             {t:"跟著旋律哼唱自己的即興版本", attr:"fantasy"}, {t:"決定跟著歌聲走進森林更深處", attr:"explore"} ] },
+    { q:"遇到一隻受傷的幼獅<br>你會",
+      opts:[ {t:"立刻用溫暖的魔法幫牠止血", attr:"light"}, {t:"陪在牠身邊，慢慢等牠自己站起來", attr:"sustain"},
+             {t:"分析傷口，找出最適合的療法", attr:"analysis"}, {t:"揹著牠，找到能治療的地方", attr:"guardian"} ] },
+    { q:"眼前出現兩條岔路<br>一條發光 一條寂靜<br>你選",
+      opts:[ {t:"寂靜的路，你想在安靜裡充電", attr:"moon"}, {t:"發光的路，直覺說那裡有寶藏", attr:"burst"},
+             {t:"想像兩條路最後會不會相遇", attr:"fantasy"}, {t:"選一條你從沒走過的路", attr:"explore"} ] },
+    { q:"森林祭典邀請你上台表演<br>你會",
+      opts:[ {t:"在聚光燈下跳一支充滿能量的舞", attr:"light"}, {t:"慢慢醞釀，表演一段安靜的獨奏", attr:"sustain"},
+             {t:"設計一場邏輯精密的幻術秀", attr:"analysis"}, {t:"邀請所有夥伴一起上台", attr:"guardian"} ] },
+    { q:"你的魔法背包裡<br>最想放的是",
+      opts:[ {t:"一顆會在夜裡發光的月亮石", attr:"moon"}, {t:"一把能劈開黑暗的火焰劍", attr:"burst"},
+             {t:"一片能帶你飛去任何地方的羽毛", attr:"fantasy"}, {t:"一張還沒有標記完的地圖", attr:"explore"} ] },
+    { q:"森林突然下起了魔法雨<br>你會",
+      opts:[ {t:"衝進雨裡，感受魔法在身上流動", attr:"light"}, {t:"找個地方，靜靜等雨停", attr:"sustain"},
+             {t:"撐起結界，觀察雨滴裡的魔力粒子", attr:"analysis"}, {t:"幫夥伴撐傘，確保大家都不會淋濕", attr:"guardian"} ] },
+    { q:"旅程即將結束<br>你最想帶走的是",
+      opts:[ {t:"一份只有安靜下來才懂的體悟", attr:"moon"}, {t:"一段值得說一輩子的冒險故事", attr:"burst"},
+             {t:"一顆能自由的心", attr:"fantasy"}, {t:"心裡那份還想繼續探索的衝動", attr:"explore"} ] }
+  ];
+
+  /* 12 隻魔法獅：key 為「充電-行動-思考-態度」四軸組合結果 */
+  var LIONS = {
+    'moon-sustain-fantasy-explore':{
+      name:"占星術獅", tagline:["通常在月亮升起後出現","研究你的晚餐命運"],
+      desc:"通常在月亮升起後出現。喜歡把撿到的石頭排成星座形狀，並花上一整晚研究明天晚餐的命運。如果牠突然盯著天空發呆，很可能是在接收宇宙訊號。（也可能只是放空。）",
+      tags:["浪漫觀測家","夜晚充電中","宇宙腦洞王"],
+      stats:{social:4, action:4, imagination:10, adventure:10}, rarity:12,
+      attract:["彩虹調色獅","露珠安眠獅"], clash:["森林回音獅","閃電獅"]
+    },
+    'moon-sustain-analysis-guardian':{
+      name:"落葉收藏獅", tagline:["記得每一片葉子的故事","森林最可靠的檔案館"],
+      desc:"據說每一片葉子都藏著故事。牠會把落葉分類保存，甚至記得是哪一天、哪陣風把葉子吹下來的。若你遺失了重要回憶，也許牠的收藏櫃裡找得到。",
+      tags:["回憶收集家","森林檔案館","念舊專家"],
+      stats:{social:4, action:4, imagination:4, adventure:4}, rarity:8,
+      attract:["蘑菇治療獅","軟綿綿棉花獅"], clash:["煙火魔法獅","彩虹調色獅"]
+    },
+    'moon-sustain-analysis-explore':{
+      name:"蘑菇治療獅", tagline:["從百種蘑菇挑出解方","迷路的人都會找牠"],
+      desc:"常出現在潮濕的森林角落研究蘑菇。據說牠能從一百種蘑菇裡挑出最適合的配方。迷路的小動物與疲憊的旅人經常排隊找牠幫忙。",
+      tags:["溫柔藥劑師","可靠夥伴","問題解決中"],
+      stats:{social:4, action:4, imagination:4, adventure:8}, rarity:9,
+      attract:["落葉收藏獅","時光魔法獅"], clash:["光芒四射獅","煙火魔法獅"]
+    },
+    'light-burst-fantasy-guardian':{
+      name:"光芒四射獅", tagline:["走到哪裡都自帶光芒","現場氣氛的開關"],
+      desc:"不論走到哪裡都會發出神秘光芒。森林居民至今無法確定那是祝福還是某種未知輻射。不過只要牠出現，現場氣氛通常會瞬間熱鬧起來。",
+      tags:["主角光環中","登場自帶特效","氣氛製造機"],
+      stats:{social:10, action:10, imagination:8, adventure:7}, rarity:10,
+      attract:["森林回音獅","獨角獸溝通獅"], clash:["占星術獅","落葉收藏獅"]
+    },
+    'light-sustain-fantasy-guardian':{
+      name:"獨角獸溝通獅", tagline:["從蝸牛到獨角獸都認識","一路聊天聊到天黑"],
+      desc:"能與所有森林生物聊天，從蝸牛到獨角獸都認識。有時只是出門買個果子，卻因為一路聊天而天黑才回家。",
+      tags:["朋友製造機","森林外交官","聊天停不下來"],
+      stats:{social:10, action:4, imagination:8, adventure:5}, rarity:9,
+      attract:["光芒四射獅","軟綿綿棉花獅"], clash:["閃電獅","時光魔法獅"]
+    },
+    'moon-burst-fantasy-explore':{
+      name:"彩虹調色獅", tagline:["負責替森林上色","心情決定天空顏色"],
+      desc:"負責替森林補充顏色。據說每當牠心情很好，天空會出現額外的彩虹；心情不好時，整片森林可能突然變成粉紅色。",
+      tags:["世界上色中","藝術家靈魂","自由萬歲"],
+      stats:{social:4, action:10, imagination:10, adventure:10}, rarity:9,
+      attract:["占星術獅","煙火魔法獅"], clash:["落葉收藏獅","森林回音獅"]
+    },
+    'light-sustain-fantasy-explore':{
+      name:"露珠安眠獅", tagline:["裝滿露珠的玻璃瓶","靠近就開始想睡"],
+      desc:"隨身攜帶裝滿露珠的玻璃瓶。瓶中會發出滴滴答答的聲音，據說失眠的人只要靠近就會開始打哈欠。牠自己也常常睡著。",
+      tags:["睡眠魔法師","夢境收藏家","慢慢來比較快"],
+      stats:{social:8, action:4, imagination:10, adventure:8}, rarity:7,
+      attract:["占星術獅","軟綿綿棉花獅"], clash:["閃電獅","森林回音獅"]
+    },
+    'light-burst-fantasy-explore':{
+      name:"煙火魔法獅", tagline:["情緒一來就冒火花","出場自帶慶典氣氛"],
+      desc:"森林裡最容易激動的獅子。當牠興奮、生氣或感動時，鬃毛會冒出煙火般的火花。每次出場都像某種慶典開幕。",
+      tags:["熱血衝衝衝","正義感爆棚","脾氣有點快"],
+      stats:{social:10, action:10, imagination:10, adventure:10}, rarity:10,
+      attract:["彩虹調色獅","閃電獅"], clash:["落葉收藏獅","露珠安眠獅"]
+    },
+    'moon-sustain-fantasy-guardian':{
+      name:"軟綿綿棉花獅", tagline:["全身像棉花糖一樣軟","沒有人捨得跟牠吵架"],
+      desc:"全身像棉花糖一樣柔軟。據說任何攻擊碰到牠都會慢慢陷進去，因此森林裡幾乎沒有人和牠吵架。也是午睡人氣第一名的靠枕。",
+      tags:["抱起來很舒服","佛系防禦術","和平代表"],
+      stats:{social:4, action:2, imagination:8, adventure:2}, rarity:7,
+      attract:["落葉收藏獅","露珠安眠獅"], clash:["煙火魔法獅","閃電獅"]
+    },
+    'moon-burst-analysis-explore':{
+      name:"時光魔法獅", tagline:["能操控時間卻常忘東西","消失幾秒又帶著答案回來"],
+      desc:"擁有操控時間的能力，但最常用來找昨天忘記放哪裡的東西。牠常常突然消失幾秒鐘，然後帶著剛剛找不到的物品回來。",
+      tags:["昨天放哪了","等等我想一下","時間管理大師"],
+      stats:{social:4, action:8, imagination:6, adventure:10}, rarity:7,
+      attract:["蘑菇治療獅","閃電獅"], clash:["獨角獸溝通獅","軟綿綿棉花獅"]
+    },
+    'light-burst-analysis-explore':{
+      name:"閃電獅", tagline:["耐心和閃電一樣短","森林裡沒人追得上"],
+      desc:"據說牠的耐心和閃電一樣短暫。當別人還在思考時，牠可能已經完成任務回家吃點心了。森林裡很少有人追得上牠。",
+      tags:["三秒就出發","效率至上","快到有殘影"],
+      stats:{social:8, action:10, imagination:4, adventure:10}, rarity:6,
+      attract:["煙火魔法獅","時光魔法獅"], clash:["占星術獅","露珠安眠獅"]
+    },
+    'light-burst-analysis-guardian':{
+      name:"森林回音獅", tagline:["說話自帶回音效果","常被誤認成森林智者"],
+      desc:"自出生起便擁有回音效果。即使只是說「今天天氣不錯」，聽起來也像在發表改變世界的重要演說。因此經常被誤認為智者。",
+      tags:["音量自帶擴音器","說話像演講","意見領袖"],
+      stats:{social:10, action:10, imagination:5, adventure:6}, rarity:6,
+      attract:["光芒四射獅","落葉收藏獅"], clash:["占星術獅","彩虹調色獅"]
+    }
+  };
+
+  /* 名字 → key 反查表（相吸/相剋用名字記錄，這裡轉回 key 方便取圖與資料） */
+  var NAME_TO_KEY = {};
+  Object.keys(LIONS).forEach(function(k){ NAME_TO_KEY[LIONS[k].name] = k; });
+
+  /* 找不到對應組合時（16 種組合中有 4 種未列在對照表），取屬性最相近的角色頂替 */
+  function nearestLionKey(targetKey){
+    if(LIONS[targetKey]) return targetKey;
+    var targetParts = targetKey.split('-');
+    var bestKey = null, bestScore = -1;
+    Object.keys(LIONS).forEach(function(k){
+      var parts = k.split('-');
+      var score = 0;
+      for(var i=0;i<4;i++){ if(parts[i]===targetParts[i]) score++; }
+      if(score > bestScore){ bestScore = score; bestKey = k; }
+    });
+    return bestKey;
+  }
+
+  /* ---------------- 狀態 ---------------- */
+  var idx = 0;
+  var scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+  var currentResult = null;
+
+  /* ---------------- DOM ---------------- */
+  var screens = {
+    start: document.getElementById('screen-start'),
+    quiz: document.getElementById('screen-quiz'),
+    result: document.getElementById('screen-result')
+  };
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
+  }
+
+
+  /* ---------------- 螢火蟲 ---------------- */
+  (function initFireflies(){
+    var wrap = document.getElementById('fireflies');
+    var n = 14;
+    for(var i=0;i<n;i++){
+      var f = document.createElement('div');
+      f.className = 'firefly';
+      var size = 2 + Math.random()*2.2;
+      f.style.width = size+"px"; f.style.height = size+"px";
+      f.style.left = (Math.random()*100)+"vw";
+      f.style.top = (10 + Math.random()*80)+"vh";
+      f.style.animationDelay = (Math.random()*6)+"s";
+      f.style.animationDuration = (5+Math.random()*4)+"s";
+      wrap.appendChild(f);
+    }
+  })();
+
+  /* ---------------- 直線＋星星進度條 ---------------- */
+  var progressTrack = document.getElementById('progress-track');
+  var STAR_PATH = 'M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z';
+  function renderProgress(){
+    var n = QUESTIONS.length;
+    var fillPct = n > 1 ? (idx/(n-1))*96 : 0;
+    var html = '<div class="progress-line-bg"></div>';
+    html += '<div class="progress-line-fill" style="width:'+fillPct+'%"></div>';
+    for(var i=0;i<n;i++){
+      var cls = i < idx ? 'done' : (i===idx ? 'now' : 'todo');
+      var pct = n > 1 ? 2 + (i/(n-1))*96 : 50;
+      html += '<svg class="progress-star '+cls+'" style="left:'+pct+'%" viewBox="0 0 24 24">'+
+        '<path d="'+STAR_PATH+'" fill="var(--gold)"/></svg>';
+    }
+    progressTrack.innerHTML = html;
+    document.getElementById('q-index').textContent = Math.min(idx+1, n);
+  }
+
+  /* ---------------- 每題全螢幕圖片/影片載入 ---------------- */
+  var quizMediaWrap = document.getElementById('quiz-media-wrap');
+  var quizPlaceholder = document.getElementById('quiz-placeholder');
+  function loadQuestionMedia(qNum){
+    quizMediaWrap.innerHTML = '';
+    quizMediaWrap.appendChild(quizPlaceholder);
+    loadFirstMedia(buildMediaCandidates('img/q' + qNum, true), function(media){
+      if(quizPlaceholder.parentNode) quizPlaceholder.remove();
+      media.alt = '第 ' + qNum + ' 題場景';
+      quizMediaWrap.insertBefore(media, quizMediaWrap.firstChild);
+    });
+  }
+
+  /* ---------------- 渲染題目 ---------------- */
+  var qText = document.getElementById('q-text');
+  var qOptions = document.getElementById('q-options');
+  var OPTION_STAR_ICON = '<svg viewBox="0 0 24 24"><path d="'+STAR_PATH+'" fill="var(--gold)"/></svg>';
+
+  function renderQuestion(){
+    renderProgress();
+    loadQuestionMedia(idx+1);
+    var item = QUESTIONS[idx];
+    qText.innerHTML = item.q;
+    qOptions.innerHTML = '';
+    item.opts.forEach(function(o){
+      var btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerHTML = '<span class="opt-glyph">'+OPTION_STAR_ICON+'</span><span>'+o.t+'</span>';
+      btn.addEventListener('click', function(){ pick(o.attr); });
+      qOptions.appendChild(btn);
+    });
+  }
+
+  function pick(attr){
+    scores[attr] += 1;
+    idx++;
+    if(idx >= QUESTIONS.length){
+      computeResult();
+      showScreen('result');
+      return;
+    }
+    var content = document.getElementById('quiz-content');
+    content.classList.add('fading');
+    setTimeout(function(){
+      renderQuestion();
+      requestAnimationFrame(function(){ content.classList.remove('fading'); });
+    }, 220);
+  }
+
+  /* ---------------- 結果計算：四軸各自比大小，組成 key 查表 ---------------- */
+  function computeResult(){
+    var charge   = (scores.light > scores.moon) ? 'light' : 'moon';
+    var action   = (scores.burst > scores.sustain) ? 'burst' : 'sustain';
+    var thinking = (scores.fantasy >= scores.analysis) ? 'fantasy' : 'analysis';
+    var attitude = (scores.explore >= scores.guardian) ? 'explore' : 'guardian';
+
+    var rawKey = charge + '-' + action + '-' + thinking + '-' + attitude;
+    var key = nearestLionKey(rawKey);
+    currentResult = { key:key, lion:LIONS[key] };
+    renderResult();
+  }
+
+  /* 角色圖：先顯示 emoji 佔位圖，若 img 資料夾裡有對應圖片就換成真實圖片 */
+  var LION_EMOJI = '🦁';
+
+  function renderPortrait(container, key){
+    container.innerHTML = '<div class="emoji-fallback">'+LION_EMOJI+'</div>';
+    loadFirstMedia(buildMediaCandidates('img/lion-' + key, true), function(media){
+      container.innerHTML = '';
+      media.alt = key;
+      container.appendChild(media);
+    });
+  }
+
+  /* ---------------- 魔法能量圖（社交能量／行動速度／想像力／冒險精神） ---------------- */
+  var STAT_LABELS = {social:'社交能量', action:'行動速度', imagination:'想像力　', adventure:'冒險精神'};
+  function statsHtmlOf(stats){
+    var html = '';
+    Object.keys(STAT_LABELS).forEach(function(k){
+      var v = Math.max(0, Math.min(10, stats[k]));
+      html += '<div class="stat-row"><div class="lbl">'+STAT_LABELS[k]+'</div>'+
+        '<div class="stat-bar"><div class="stat-fill" style="width:'+(v*10)+'%"></div></div></div>';
+    });
+    return html;
+  }
+
+  function renderResult(){
+    var r = currentResult, lion = r.lion, key = r.key;
+
+    renderPortrait(document.getElementById('res-portrait'), key);
+
+    document.getElementById('res-name').textContent = lion.name;
+    document.getElementById('res-tagline').innerHTML = lion.tagline.join('<br>');
+    var tagSpan = function(t){ return '<span class="res-tag">#'+t+'</span>'; };
+    document.getElementById('res-tags').innerHTML =
+      '<div class="tag-row">'+tagSpan(lion.tags[0])+tagSpan(lion.tags[1])+'</div>'+
+      '<div class="tag-row">'+tagSpan(lion.tags[2])+'</div>';
+
+    document.getElementById('res-desc').textContent = lion.desc;
+    document.getElementById('res-stats').innerHTML = statsHtmlOf(lion.stats);
+
+    var attract1 = LIONS[NAME_TO_KEY[lion.attract[0]]];
+    var attract2 = LIONS[NAME_TO_KEY[lion.attract[1]]];
+    var clash1 = LIONS[NAME_TO_KEY[lion.clash[0]]];
+    var clash2 = LIONS[NAME_TO_KEY[lion.clash[1]]];
+
+    renderPortrait(document.getElementById('res-rel-attract-1'), NAME_TO_KEY[lion.attract[0]]);
+    document.getElementById('res-rel-attract-1-name').textContent = attract1.name;
+    renderPortrait(document.getElementById('res-rel-attract-2'), NAME_TO_KEY[lion.attract[1]]);
+    document.getElementById('res-rel-attract-2-name').textContent = attract2.name;
+
+    renderPortrait(document.getElementById('res-rel-clash-1'), NAME_TO_KEY[lion.clash[0]]);
+    document.getElementById('res-rel-clash-1-name').textContent = clash1.name;
+    renderPortrait(document.getElementById('res-rel-clash-2'), NAME_TO_KEY[lion.clash[1]]);
+    document.getElementById('res-rel-clash-2-name').textContent = clash2.name;
+  }
+
+  /* ---------------- 事件 ---------------- */
+  document.getElementById('btn-start').addEventListener('click', function(){
+    idx = 0; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    showScreen('quiz');
+    renderQuestion();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function(){
+    idx = 0; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    showScreen('start');
+  });
+
+  document.getElementById('btn-save').addEventListener('click', function(){
+    var btn = this;
+    var originalText = btn.textContent;
+    btn.textContent = '正在繪製…';
+    btn.disabled = true;
+
+    var lion = currentResult.lion;
+    var actionsEl = document.getElementById('res-actions');
+
+    /* 找出畫面上所有用 <video> 顯示的角色圖容器，截圖時暫時換成靜態圖片
+       （html2canvas 無法正確截取 video 畫面），截圖完成後再換回影片 */
+    var portraitSlots = [
+      {el: document.getElementById('res-portrait'), key: currentResult.key},
+      {el: document.getElementById('res-rel-attract-1'), key: NAME_TO_KEY[lion.attract[0]]},
+      {el: document.getElementById('res-rel-attract-2'), key: NAME_TO_KEY[lion.attract[1]]},
+      {el: document.getElementById('res-rel-clash-1'), key: NAME_TO_KEY[lion.clash[0]]},
+      {el: document.getElementById('res-rel-clash-2'), key: NAME_TO_KEY[lion.clash[1]]}
+    ];
+    var restores = [];
+
+    function swapVideosForStills(){
+      return Promise.all(portraitSlots.map(function(slot){
+        if(!slot.el.querySelector('video')) return Promise.resolve();
+        return new Promise(function(resolve){
+          var originalHTML = slot.el.innerHTML;
+          loadFirstMedia(buildMediaCandidates('img/lion-' + slot.key, false), function(img){
+            slot.el.innerHTML = '';
+            img.alt = slot.key;
+            slot.el.appendChild(img);
+            restores.push({el: slot.el, html: originalHTML});
+            resolve();
+          }, resolve); // 找不到對應靜態圖就維持原樣（video 仍在畫面上，截圖可能是黑畫面）
+        });
+      }));
+    }
+
+    function restoreVideos(){
+      restores.forEach(function(r){ r.el.innerHTML = r.html; });
+    }
+
+    function restoreBtn(){ btn.textContent = originalText; btn.disabled = false; }
+
+    swapVideosForStills().then(function(){
+      if(typeof html2canvas === 'undefined'){
+        alert('圖片繪製工具載入失敗，請檢查網路後重試。');
+        restoreVideos();
+        restoreBtn();
+        return;
+      }
+      actionsEl.style.display = 'none';
+      html2canvas(document.getElementById('screen-result'), {backgroundColor:'#163849', scale:2})
+        .then(function(canvas){
+          var link = document.createElement('a');
+          link.download = lion.name + '.png';
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        })
+        .catch(function(err){
+          console.error('另存魔法獅檔案失敗：', err);
+          if(location.protocol === 'file:'){
+            alert('圖片繪製失敗。這通常是因為直接雙擊開啟 html 檔案（網址是 file:// 開頭）造成的瀏覽器安全限制——瀏覽器會擋掉「把本機圖片畫成圖檔」這個動作。\n\n請把整個資料夾（html + img）放到正式的網站空間再試（例如 GitHub Pages、Netlify，或用 VS Code 的 Live Server 之類的本機伺服器打開），存檔功能就會恢復正常。');
+          } else {
+            alert('圖片繪製失敗，請再試一次。');
+          }
+        })
+        .then(function(){
+          actionsEl.style.display = '';
+          restoreVideos();
+          restoreBtn();
+        });
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
