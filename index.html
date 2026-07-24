@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-deep:#163849;
+    --bg-deep:#17394A;
     --outer-bg:#132028;
     --parchment:#f3ecd9;
     --parchment-dim:#c9c0a6;
@@ -35,7 +35,7 @@
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* ---------- 背景（#163849，延伸至平板/桌面兩側） ---------- */
+  /* ---------- 背景（#17394A，延伸至平板/桌面兩側） ---------- */
   .forest-bg{
     position:fixed; inset:0; z-index:0;
     background:
@@ -155,7 +155,7 @@
     cursor:pointer; letter-spacing:.03em;
     transition:transform .15s ease, background-color .3s ease, color .3s ease;
   }
-  .btn-primary:hover{ background-color:#F3E8AE; color:var(--bg-deep); }
+  .btn-primary:hover{ background-color:var(--title-teal); color:var(--bg-deep); }
   .btn-primary:active{ transform:scale(.96); }
 
   /* ---------- 測驗畫面：全螢幕背景 + 簡潔直線進度 + 4 選項 ---------- */
@@ -196,10 +196,16 @@
 
   .progress-wrap{ position:relative; z-index:1; flex-shrink:0; }
   .progress-label{
-    display:flex; justify-content:space-between; align-items:baseline;
+    display:flex; justify-content:space-between; align-items:center;
     font-size:11.5px; color:var(--parchment-dim); margin-bottom:8px; letter-spacing:.05em;
   }
   .progress-label b{ color:var(--gold); font-weight:700; }
+  .btn-back{
+    background:none; border:none; padding:2px; cursor:pointer;
+    color:var(--parchment); display:flex; align-items:center;
+    transition:opacity .15s ease;
+  }
+  .btn-back svg{ width:18px; height:18px; }
   .progress-line-wrap{ position:relative; height:18px; }
   .progress-line-bg{
     position:absolute; top:50%; left:2%; right:2%; height:2px;
@@ -221,35 +227,35 @@
   .q-body{
     position:relative; z-index:1;
     flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-end;
-    align-items:center;
-    padding:10px 2px 0;
+    align-items:stretch;
+    padding:10px 0 0;
   }
   .q-text{
     font-family:var(--font-display); font-weight:700;
-    font-size:clamp(16px, 3vh, 19px); line-height:1.5;
+    font-size:clamp(12px, 2.1vh, 14px); line-height:1.6;
     color:var(--parchment);
     text-shadow:0 2px 14px rgba(0,0,0,.4);
-    text-align:center;
-    max-width:92%;
-    margin:0 auto;
+    text-align:left;
+    width:100%;
+    margin:0;
   }
   .options{
     position:relative; z-index:1; flex-shrink:0;
-    display:flex; flex-direction:column; gap:9px;
-    margin-top:28px;
+    display:flex; flex-direction:column; gap:8px;
+    margin-top:16px;
   }
   .opt-btn{
-    text-align:left; font-family:var(--font-body); font-size:13.5px; line-height:1.4;
+    text-align:left; font-family:var(--font-body); font-size:12px; line-height:1.4;
     color:var(--parchment); background:var(--block-bg);
     border:none; border-radius:14px;
-    padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:10px;
+    padding:11px 13px; cursor:pointer; display:flex; align-items:flex-start; gap:9px;
     transition:background .15s, transform .12s;
   }
   .opt-btn:active{ transform:scale(.97); background:var(--bar-bg); }
-  .opt-glyph{ flex-shrink:0; width:16px; height:16px; opacity:.9; }
+  .opt-glyph{ flex-shrink:0; width:14px; height:14px; opacity:.9; margin-top:2px; }
 
   /* ---------- 結果畫面 ---------- */
-  #screen-result{ padding:0; }
+  #screen-result{ padding:0; background:#03394B; }
 
   .res-header{
     flex-shrink:0; width:100%; text-align:center;
@@ -259,9 +265,10 @@
   }
   .deco-star{ position:absolute; z-index:3; pointer-events:none; }
   .deco-star img{ width:100%; height:100%; object-fit:contain; display:block; }
-  #deco-star-1{ top:6%; left:-4%; width:15%; aspect-ratio:1/1; }
-  #deco-star-2{ top:33%; right:-4%; width:13%; aspect-ratio:1/1; }
-  #deco-star-3{ bottom:8%; right:-3%; width:14%; aspect-ratio:1/1; }
+  #deco-star-1{ top:6%; left:-4%; width:21%; aspect-ratio:1/1; }
+  #deco-star-2{ top:27%; right:-3%; width:19%; aspect-ratio:1/1; }
+  #deco-star-3{ bottom:8%; right:-3%; width:20%; aspect-ratio:1/1; }
+  #deco-star-4{ top:63%; left:-4%; width:18%; aspect-ratio:1/1; }
   .res-footer{
     flex-shrink:0; width:100%; text-align:center;
     background:var(--block-bg); color:var(--parchment-dim);
@@ -293,7 +300,7 @@
   .res-tagline{ font-size:11px; line-height:1.4; color:var(--parchment); margin-bottom:16px; }
   .res-name{
     font-family:var(--font-display); font-weight:900; color:var(--gold);
-    font-size:clamp(19px, 3.6vh, 25px); line-height:1.4; margin:0 0 16px;
+    font-size:clamp(19px, 3.6vh, 25px); line-height:1.4; margin:0 0 6px;
   }
   .res-tags{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
   .tag-row{ display:flex; gap:6px; justify-content:flex-start; }
@@ -301,6 +308,7 @@
     font-size:10px; min-width:6.2em; padding:3px 6px; border-radius:999px; white-space:nowrap;
     text-align:center; background:var(--parchment); color:var(--bg-deep); font-weight:700;
   }
+  .res-rarity{ font-size:11px; color:var(--gold); font-weight:700; margin-top:8px; }
 
   .res-block{
     flex-shrink:0; background:var(--block-bg); border-radius:14px; padding:9px 10px;
@@ -318,11 +326,11 @@
     display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
   }
 
-  .res-stats{ display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; }
-  .stat-row{ font-size:10px; display:flex; align-items:center; gap:6px; }
+  .res-stats{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:6px 10px; }
+  .stat-row{ font-size:10px; display:flex; align-items:center; gap:6px; min-width:0; }
   .stat-row .lbl{ color:var(--parchment); flex-shrink:0; white-space:nowrap; }
   .stat-bar{
-    flex:0 0 auto; width:92px; height:8px; border-radius:5px; background:rgba(255,255,255,.12); overflow:hidden;
+    flex:1 1 auto; min-width:0; max-width:92px; height:8px; border-radius:5px; background:rgba(255,255,255,.12); overflow:hidden;
   }
   .stat-fill{
     height:100%; border-radius:5px; width:0%;
@@ -402,16 +410,16 @@
             <div class="line2">探索你魔法潛力</div>
           </h1>
           <div class="quote-block">
-            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="#F3E8AE" stroke-width="1.5"/></svg>
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="var(--title-teal)" stroke-width="1.5"/></svg>
             <p class="lede-quote">真正的魔法獅 會在森林深處<br>找到屬於自己的魔法</p>
-            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="#F3E8AE" stroke-width="1.5"/></svg>
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="var(--title-teal)" stroke-width="1.5"/></svg>
           </div>
           <p class="lede">你站在魔法森林的入口<br>一塊覆滿藤蔓的古老木牌上這麼寫著</p>
-          <p class="lede2">微風吹過，森林裡傳來奇妙的聲音<br>你的冒險，即將開始</p>
+          <p class="lede2">微風吹過，森林裡傳來奇妙的聲音</p>
         </div>
 
         <div class="start-cta">
-          <button class="btn-primary" id="btn-start">點擊開始</button>
+          <button class="btn-primary" id="btn-start">你的冒險 即將開始</button>
         </div>
       </div>
     </section>
@@ -428,7 +436,12 @@
           <div class="quiz-scrim-bottom"></div>
 
           <div class="progress-wrap">
-            <div class="progress-label"><span>森林之路</span><span><b id="q-index">1</b> / 10 章</span></div>
+            <div class="progress-label">
+              <button class="btn-back" id="btn-back" aria-label="上一題">
+                <svg viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span><b id="q-index">1</b> / <span id="q-total"></span></span>
+            </div>
             <div class="progress-line-wrap" id="progress-track"></div>
           </div>
           <div class="q-body">
@@ -446,6 +459,7 @@
       <div class="deco-star" id="deco-star-1"></div>
       <div class="deco-star" id="deco-star-2"></div>
       <div class="deco-star" id="deco-star-3"></div>
+      <div class="deco-star" id="deco-star-4"></div>
 
       <div class="res-body">
         <div class="res-hero-row">
@@ -456,6 +470,7 @@
             <div class="res-name" id="res-name"></div>
             <div class="res-tagline" id="res-tagline"></div>
             <div class="res-tags" id="res-tags"></div>
+            <div class="res-rarity" id="res-rarity"></div>
           </div>
         </div>
 
@@ -471,7 +486,7 @@
 
         <div class="res-relations">
           <div class="res-rel-card">
-            <div class="res-rel-label">與你共鳴的魔法</div>
+            <div class="res-rel-label">與你共鳴的魔法獅</div>
             <div class="res-rel-pair">
               <div class="res-rel-thumb" id="res-rel-attract-1"></div>
               <div class="res-rel-thumb" id="res-rel-attract-2"></div>
@@ -482,7 +497,7 @@
             </div>
           </div>
           <div class="res-rel-card">
-            <div class="res-rel-label">與你遙望的魔法</div>
+            <div class="res-rel-label">與你異頻的魔法獅</div>
             <div class="res-rel-pair">
               <div class="res-rel-thumb" id="res-rel-clash-1"></div>
               <div class="res-rel-thumb" id="res-rel-clash-2"></div>
@@ -545,6 +560,16 @@
     })();
   }
 
+  /* 等網頁字型完全載入、畫面重繪穩定後才 resolve；避免截圖時字型還沒套用造成文字位置跑掉 */
+  function settle(){
+    return (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+      .then(function(){
+        return new Promise(function(resolve){
+          requestAnimationFrame(function(){ requestAnimationFrame(resolve); });
+        });
+      });
+  }
+
   /* ---------------- 起始頁 Hero 圖片/影片載入 ---------------- */
   (function initHeroMedia(){
     var wrap = document.getElementById('hero-media-wrap');
@@ -558,7 +583,7 @@
 
   /* ---------------- 結果頁裝飾星星（純裝飾，沒放圖就維持空白） ---------------- */
   (function initDecoStars(){
-    ['deco-star-1', 'deco-star-2', 'deco-star-3'].forEach(function(id){
+    ['deco-star-1', 'deco-star-2', 'deco-star-3', 'deco-star-4'].forEach(function(id){
       var el = document.getElementById(id);
       if(!el) return;
       loadFirstMedia(buildMediaCandidates('img/' + id, false), function(media){
@@ -573,123 +598,107 @@
      思考方式：fantasy 幻想 / analysis 分析　人生態度：explore 探索 / guardian 守護 */
 
   var QUESTIONS = [
-    { q:"深夜的森林裡忽然亮起一道光<br>你會",
-      opts:[ {t:"立刻衝過去感受那股光的溫度", attr:"light"}, {t:"先蹲下來，安靜等光靠近你", attr:"sustain"},
-             {t:"觀察光的規律，猜測它的來源", attr:"analysis"}, {t:"先確認同伴都在身邊再一起靠近", attr:"guardian"} ] },
-    { q:"一隻迷路的小狐狸抬頭看著你<br>你會",
-      opts:[ {t:"在月光下靜靜陪牠坐一會兒", attr:"moon"}, {t:"立刻抱起牠衝回營地", attr:"burst"},
-             {t:"想像牠是來自星星的使者", attr:"fantasy"}, {t:"跟著牠走走看牠想帶你去哪", attr:"explore"} ] },
-    { q:"你發現一本會自己翻頁的魔法書<br>你會",
-      opts:[ {t:"迫不及待翻開它感受書裡的光", attr:"light"}, {t:"把書放著，讓它自己慢慢翻完", attr:"sustain"},
-             {t:"仔細研究書頁上符文的構造", attr:"analysis"}, {t:"先確認這本書不會傷到誰", attr:"guardian"} ] },
-    { q:"森林深處傳來奇怪又美麗的歌聲<br>你會",
-      opts:[ {t:"閉上眼睛安靜聆聽歌聲裡的情緒", attr:"moon"}, {t:"立刻衝過去找出聲音的來源", attr:"burst"},
-             {t:"跟著旋律哼唱自己的即興版本", attr:"fantasy"}, {t:"決定跟著歌聲走進森林更深處", attr:"explore"} ] },
-    { q:"遇到一隻受傷的幼獅<br>你會",
-      opts:[ {t:"立刻用溫暖的魔法幫牠止血", attr:"light"}, {t:"陪在牠身邊，慢慢等牠自己站起來", attr:"sustain"},
-             {t:"分析傷口，找出最適合的療法", attr:"analysis"}, {t:"揹著牠，找到能治療的地方", attr:"guardian"} ] },
-    { q:"眼前出現兩條岔路<br>一條發光 一條寂靜<br>你選",
-      opts:[ {t:"寂靜的路，你想在安靜裡充電", attr:"moon"}, {t:"發光的路，直覺說那裡有寶藏", attr:"burst"},
-             {t:"想像兩條路最後會不會相遇", attr:"fantasy"}, {t:"選一條你從沒走過的路", attr:"explore"} ] },
-    { q:"森林祭典邀請你上台表演<br>你會",
-      opts:[ {t:"在聚光燈下跳一支充滿能量的舞", attr:"light"}, {t:"慢慢醞釀，表演一段安靜的獨奏", attr:"sustain"},
-             {t:"設計一場邏輯精密的幻術秀", attr:"analysis"}, {t:"邀請所有夥伴一起上台", attr:"guardian"} ] },
-    { q:"你的魔法背包裡<br>最想放的是",
-      opts:[ {t:"一顆會在夜裡發光的月亮石", attr:"moon"}, {t:"一把能劈開黑暗的火焰劍", attr:"burst"},
-             {t:"一片能帶你飛去任何地方的羽毛", attr:"fantasy"}, {t:"一張還沒有標記完的地圖", attr:"explore"} ] },
-    { q:"森林突然下起了魔法雨<br>你會",
-      opts:[ {t:"衝進雨裡，感受魔法在身上流動", attr:"light"}, {t:"找個地方，靜靜等雨停", attr:"sustain"},
-             {t:"撐起結界，觀察雨滴裡的魔力粒子", attr:"analysis"}, {t:"幫夥伴撐傘，確保大家都不會淋濕", attr:"guardian"} ] },
-    { q:"旅程即將結束<br>你最想帶走的是",
-      opts:[ {t:"一份只有安靜下來才懂的體悟", attr:"moon"}, {t:"一段值得說一輩子的冒險故事", attr:"burst"},
-             {t:"一顆能自由的心", attr:"fantasy"}, {t:"心裡那份還想繼續探索的衝動", attr:"explore"} ] }
-  ];
+    { q:'你走進魔法森林的入口<br>來到一片美麗的花田<br>每朵花都散發不同顏色的光芒<br>靠近時還會發出細小的聲音',
+      opts:[ {t:'坐在花旁靜靜聽它發出的聲音，它是在和我說話嗎？', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'靠近花朵，看看它會產生什麼變化和它反應', attrs:[{attr:'light', pts:2}, {attr:'burst', pts:1}]}, {t:'仔細看看每朵花的不同之處，這麼美麗的花是什麼品種呢', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'輕輕替花朵遮住風吹來的方向，脆弱的小花就應該有人陪伴它吧', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'離開花田後你遇見一隻迷路的小鹿<br>牠想回到森林深處 卻忘記回家的方向',
+      opts:[ {t:'陪牠聊聊一路上的經歷，知道牠的故事應該比較會有幫助', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'和牠一起踏上未知的小路，說不定會發現新的風景', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'看看附近留下的痕跡，小鹿來的時候有看到什麼呢', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'陪牠在樹下休息一會，有時候不用急著找到答案', attrs:[{attr:'moon', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'小鹿帶你來到森林深處<br>一棵古老大樹用歌聲守護森林<br>告訴你湖泊就在前方',
+      opts:[ {t:'問問古樹曾經看見過的森林故事，了解這片森林', attrs:[{attr:'analysis', pts:2}, {attr:'guardian', pts:1}]}, {t:'跟著旋律往前走，真好奇這段歌聲會把我帶往哪裡', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'把古樹的歌聲記下來，這段旋律一定值得留下', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'靜靜聽完古樹的歌聲，再跟著旋律前進', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]} ] },
+    { q:'離開古樹後 一群螢光蝴蝶飛過森林<br>牠們散發柔和光芒<br>似乎正在邀請你跟上',
+      opts:[ {t:'追著最亮的蝴蝶前進，它一定知道特別的地方', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'靜靜看著蝴蝶飛舞的方向，牠們好像正在傳遞某種訊息', attrs:[{attr:'moon', pts:2}, {attr:'analysis', pts:1}]}, {t:'嘗試靠近蝴蝶看看牠是否願意停留，也許我們可以成為朋友', attrs:[{attr:'light', pts:2}, {attr:'fantasy', pts:1}]}, {t:'放慢腳步不驚擾飛舞的蝴蝶，跟著牠們保持一段距離', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'往前走去 螢光蝴蝶消失在一片白色迷霧之中<br>前方的道路被白霧覆蓋<br>你只能看見幾步以內的距離',
+      opts:[ {t:'跟著直覺走，也許森林正在用另一種方式指引我', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'等待霧氣慢慢散開再決定下一步，時間會帶來答案', attrs:[{attr:'sustain', pts:2}, {attr:'moon', pts:1}]}, {t:'仔細感受周圍的變化，風的方向、樹葉的聲音都值得注意！', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'發出聲音看看是否有人回應，難道森林裡還有沒有其他夥伴嗎？', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]} ] },
+    { q:'穿過迷霧 眼前是一條古老的吊橋<br>橋的另一端 隱約傳來湖水流動的聲音<br>你不知道這座橋是否安全<br>但似乎只有通過它 才能抵達森林另一端',
+      opts:[ {t:'先仔細查看橋上的狀況再慢慢踏上去，確保安全才能安心前進', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'想像這座橋曾連接過什麼地方，走過這座橋的人有什麼故事', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'深吸一口氣直接踏上搖晃的橋面，冒險就是要跨出第一步！', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'回頭看看是否有其他生物需要幫忙，一起抵達比一個人更重要', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'通過吊橋後 如鏡子般夢幻的湖泊映入眼簾<br>平靜的湖面 浮現出這一路上的旅程畫面',
+      opts:[ {t:'靜靜看著湖面的倒影，原來我們經歷了這麼多啊！', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'想把重要的畫面記錄下來，每段相遇都值得留下', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'想知道湖面之外還藏著什麼，這片森林一定還有更多秘密', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'仔細回想一路遇見的景色，每段旅程都別具意義呢', attrs:[{attr:'analysis', pts:2}, {attr:'moon', pts:1}]} ] },
+    { q:'畫面淡去後的湖面泛起光芒<br>森林中的魔法力量回應你的旅程<br>四個禮物浮現在湖面 示意你帶走一份',
+      opts:[ {t:'一束溫暖的光芒，希望它能陪伴需要力量的人', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'一本記錄森林故事的書，希望美好的回憶都能被好好記住', attrs:[{attr:'light', pts:2}, {attr:'analysis', pts:1}]}, {t:'一條可以通往未知遠方的光之門，隨時探索想去的地方', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'一朵會隨心情變換顏色的魔法花，把色彩分享給經過的每個地方', attrs:[{attr:'fantasy', pts:2}, {attr:'light', pts:1}]} ] } ];
 
-  /* 12 隻魔法獅：key 為「充電-行動-思考-態度」四軸組合結果 */
-  var LIONS = {
+    var LIONS = {
     'moon-sustain-fantasy-explore':{
-      name:"占星術獅", tagline:["通常在月亮升起後出現","研究你的晚餐命運"],
-      desc:"通常在月亮升起後出現。喜歡把撿到的石頭排成星座形狀，並花上一整晚研究明天晚餐的命運。如果牠突然盯著天空發呆，很可能是在接收宇宙訊號。（也可能只是放空。）",
-      tags:["浪漫觀測家","夜晚充電中","宇宙腦洞王"],
-      stats:{social:4, action:4, imagination:10, adventure:10}, rarity:12,
-      attract:["彩虹調色獅","露珠安眠獅"], clash:["森林回音獅","閃電獅"]
+      name:'占星術獅', tagline:['觀察星星與命運','預測今天晚餐吃什麼'],
+      desc:'你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情，總能從平凡事物裡發現不一樣的意義。你習慣先聆聽內心的聲音，再慢慢找到自己的方向，總能發現別人忽略的小小奇蹟。',
+      tags:['浪漫觀測家','靈感收藏家','宇宙腦洞王'],
+      stats:{social:4, action:3, imagination:10, adventure:8}, rarity:55,
+      attract:['彩虹調色獅','露珠安眠獅'], clash:['森林回音獅','雷光疾行獅']
     },
     'moon-sustain-analysis-guardian':{
-      name:"落葉收藏獅", tagline:["記得每一片葉子的故事","森林最可靠的檔案館"],
-      desc:"據說每一片葉子都藏著故事。牠會把落葉分類保存，甚至記得是哪一天、哪陣風把葉子吹下來的。若你遺失了重要回憶，也許牠的收藏櫃裡找得到。",
-      tags:["回憶收集家","森林檔案館","念舊專家"],
-      stats:{social:4, action:4, imagination:4, adventure:4}, rarity:8,
-      attract:["蘑菇治療獅","軟綿綿棉花獅"], clash:["煙火魔法獅","彩虹調色獅"]
+      name:'落葉收藏獅', tagline:['喜歡收集森林落葉','感知到每片葉片的故事'],
+      desc:'你總能在森林裡找到別人忽略的寶物。你記得別人隨口說過的小事，也總能感受到那些微小卻重要的情緒變化。你重情感、珍惜回憶，也珍惜人與人之間細微卻真實的連結。',
+      tags:['回憶收藏家','念舊','心思細膩'],
+      stats:{social:4, action:4, imagination:4, adventure:3}, rarity:65,
+      attract:['蘑菇治療獅','軟綿綿棉花獅'], clash:['煙火魔法獅','雷光疾行獅']
     },
     'moon-sustain-analysis-explore':{
-      name:"蘑菇治療獅", tagline:["從百種蘑菇挑出解方","迷路的人都會找牠"],
-      desc:"常出現在潮濕的森林角落研究蘑菇。據說牠能從一百種蘑菇裡挑出最適合的配方。迷路的小動物與疲憊的旅人經常排隊找牠幫忙。",
-      tags:["溫柔藥劑師","可靠夥伴","問題解決中"],
-      stats:{social:4, action:4, imagination:4, adventure:8}, rarity:9,
-      attract:["落葉收藏獅","時光魔法獅"], clash:["光芒四射獅","煙火魔法獅"]
+      name:'蘑菇治療獅', tagline:['從百種蘑菇製作解方','需要幫助的人都會找你'],
+      desc:'你常出現在潮濕的森林角落研究蘑菇，也總能第一時間發現身邊人的小小需要。你習慣用實際行動表達關心，比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。在森林裡，你是大家遇到困難時，第一個想尋找的可靠夥伴。',
+      tags:['溫柔藥劑師','可靠夥伴','默默守護'],
+      stats:{social:4, action:4, imagination:6, adventure:8}, rarity:75,
+      attract:['落葉收藏獅','時光魔法獅'], clash:['光芒四射獅','煙火魔法獅']
     },
     'light-burst-fantasy-guardian':{
-      name:"光芒四射獅", tagline:["走到哪裡都自帶光芒","現場氣氛的開關"],
-      desc:"不論走到哪裡都會發出神秘光芒。森林居民至今無法確定那是祝福還是某種未知輻射。不過只要牠出現，現場氣氛通常會瞬間熱鬧起來。",
-      tags:["主角光環中","登場自帶特效","氣氛製造機"],
-      stats:{social:10, action:10, imagination:8, adventure:7}, rarity:10,
-      attract:["森林回音獅","獨角獸溝通獅"], clash:["占星術獅","落葉收藏獅"]
+      name:'光芒四射獅', tagline:['走到哪裡都自帶光芒','現場氣氛的開關'],
+      desc:'你總是出現在森林需要一點力量的時候。你喜歡分享自己的熱情，也習慣用一句鼓勵、一個行動，替身邊的人注入勇氣。對你來說，光芒不是為了讓自己被看見，而是希望更多人找到繼續前進的方向。',
+      tags:['主角光環','熱情發電站','氣氛製造機'],
+      stats:{social:10, action:10, imagination:8, adventure:4}, rarity:30,
+      attract:['森林回音獅','獨角獸溝通獅'], clash:['占星術獅','落葉收藏獅']
     },
     'light-sustain-fantasy-guardian':{
-      name:"獨角獸溝通獅", tagline:["從蝸牛到獨角獸都認識","一路聊天聊到天黑"],
-      desc:"能與所有森林生物聊天，從蝸牛到獨角獸都認識。有時只是出門買個果子，卻因為一路聊天而天黑才回家。",
-      tags:["朋友製造機","森林外交官","聊天停不下來"],
-      stats:{social:10, action:4, imagination:8, adventure:5}, rarity:9,
-      attract:["光芒四射獅","軟綿綿棉花獅"], clash:["閃電獅","時光魔法獅"]
+      name:'獨角獸溝通獅', tagline:['從蝸牛到獨角獸都認識','一路聊天聊到天黑'],
+      desc:'你是一個善於理解他人的人，喜歡傾聽不同的故事，也相信每個生命都有值得被理解的一面。你記得每個人的故事，也習慣成為大家之間的橋樑。你相信每個生命都有自己的語言，也擅長讓原本陌生的彼此慢慢靠近。',
+      tags:['朋友製造機','森林外交官','聊天停不下來'],
+      stats:{social:10, action:4, imagination:9, adventure:4}, rarity:60,
+      attract:['光芒四射獅','軟綿綿棉花獅'], clash:['雷光疾行獅','時光魔法獅']
     },
     'moon-burst-fantasy-explore':{
-      name:"彩虹調色獅", tagline:["負責替森林上色","心情決定天空顏色"],
-      desc:"負責替森林補充顏色。據說每當牠心情很好，天空會出現額外的彩虹；心情不好時，整片森林可能突然變成粉紅色。",
-      tags:["世界上色中","藝術家靈魂","自由萬歲"],
-      stats:{social:4, action:10, imagination:10, adventure:10}, rarity:9,
-      attract:["占星術獅","煙火魔法獅"], clash:["落葉收藏獅","森林回音獅"]
+      name:'彩虹調色獅', tagline:['隨身攜帶彩虹色票','隨著心情揮灑顏色'],
+      desc:'你總是帶著一本彩虹色票到處旅行，替世界補上缺少的顏色。你習慣用不同角度看待眼前的一切，從一片落葉、一場雨，到一個不起眼的小角落，都能發現新的靈感。你的世界沒有固定答案，每一天都可能變成一幅全新的作品。',
+      tags:['創意爆發','藝術家靈魂','自由萬歲'],
+      stats:{social:4, action:10, imagination:10, adventure:10}, rarity:20,
+      attract:['占星術獅','煙火魔法獅'], clash:['時光魔法獅','森林回音獅']
     },
     'light-sustain-fantasy-explore':{
-      name:"露珠安眠獅", tagline:["裝滿露珠的玻璃瓶","靠近就開始想睡"],
-      desc:"隨身攜帶裝滿露珠的玻璃瓶。瓶中會發出滴滴答答的聲音，據說失眠的人只要靠近就會開始打哈欠。牠自己也常常睡著。",
-      tags:["睡眠魔法師","夢境收藏家","慢慢來比較快"],
-      stats:{social:8, action:4, imagination:10, adventure:8}, rarity:7,
-      attract:["占星術獅","軟綿綿棉花獅"], clash:["閃電獅","森林回音獅"]
+      name:'露珠安眠獅', tagline:['收集森林清晨的露珠','滴答聲藏著安眠魔法'],
+      desc:'你總是背著露珠瓶在森林裡四處旅行，收集不同地方的夢境聲音。每一滴露珠都有自己的故事，有些來自月光照耀的湖畔，有些來自清晨第一片葉子的尖端。你習慣放慢腳步感受世界，相信世界上最珍貴的發現，往往藏在那些願意慢下腳步的人眼前。',
+      tags:['夢境收藏家','療癒系','慢慢來比較快'],
+      stats:{social:8, action:3, imagination:9, adventure:8}, rarity:35,
+      attract:['占星術獅','軟綿綿棉花獅'], clash:['雷光疾行獅','森林回音獅']
     },
     'light-burst-fantasy-explore':{
-      name:"煙火魔法獅", tagline:["情緒一來就冒火花","出場自帶慶典氣氛"],
-      desc:"森林裡最容易激動的獅子。當牠興奮、生氣或感動時，鬃毛會冒出煙火般的火花。每次出場都像某種慶典開幕。",
-      tags:["熱血衝衝衝","正義感爆棚","脾氣有點快"],
-      stats:{social:10, action:10, imagination:10, adventure:10}, rarity:10,
-      attract:["彩虹調色獅","閃電獅"], clash:["落葉收藏獅","露珠安眠獅"]
+      name:'煙火魔法獅', tagline:['見義勇為但脾氣暴躁','激動的時候會炸出小火花'],
+      desc:'你經常在森林需要幫助的時候第一個出現。你的情緒像煙火一樣燦爛又直接，開心會發光，生氣也會發光。你的腦中總有許多奇妙點子，想到就忍不住想試試看。偶爾衝得太快，但你的勇氣總能照亮別人不敢前進的方向。',
+      tags:['熱血行動派','正義感爆棚','脾氣有點快'],
+      stats:{social:9, action:10, imagination:8, adventure:9}, rarity:15,
+      attract:['彩虹調色獅','雷光疾行獅'], clash:['落葉收藏獅','露珠安眠獅']
     },
     'moon-sustain-fantasy-guardian':{
-      name:"軟綿綿棉花獅", tagline:["全身像棉花糖一樣軟","沒有人捨得跟牠吵架"],
-      desc:"全身像棉花糖一樣柔軟。據說任何攻擊碰到牠都會慢慢陷進去，因此森林裡幾乎沒有人和牠吵架。也是午睡人氣第一名的靠枕。",
-      tags:["抱起來很舒服","佛系防禦術","和平代表"],
-      stats:{social:4, action:2, imagination:8, adventure:2}, rarity:7,
-      attract:["落葉收藏獅","露珠安眠獅"], clash:["煙火魔法獅","閃電獅"]
+      name:'軟綿綿棉花獅', tagline:['全身像棉花糖一樣軟','受到攻擊時不會受到攻擊'],
+      desc:'你的身體像棉花糖一樣柔軟，就連衝突碰到你都會慢慢陷進去。你不喜歡爭吵，也不急著證明自己是對的，更願意用理解與包容化解問題。別人以為你的溫柔來自天性，但其實那是一種經過練習的勇敢。',
+      tags:['抱起來很舒服','柔軟力量','和平代表'],
+      stats:{social:4, action:2, imagination:8, adventure:2}, rarity:45,
+      attract:['落葉收藏獅','露珠安眠獅'], clash:['煙火魔法獅','雷光疾行獅']
     },
     'moon-burst-analysis-explore':{
-      name:"時光魔法獅", tagline:["能操控時間卻常忘東西","消失幾秒又帶著答案回來"],
-      desc:"擁有操控時間的能力，但最常用來找昨天忘記放哪裡的東西。牠常常突然消失幾秒鐘，然後帶著剛剛找不到的物品回來。",
-      tags:["昨天放哪了","等等我想一下","時間管理大師"],
-      stats:{social:4, action:8, imagination:6, adventure:10}, rarity:7,
-      attract:["蘑菇治療獅","閃電獅"], clash:["獨角獸溝通獅","軟綿綿棉花獅"]
+      name:'時光魔法獅', tagline:['穿梭昨天與明天','最常用來找弄丟的東西'],
+      desc:'你經常消失在森林裡最奇怪的地方。有人說你在追逐時間留下的線索，也有人說你只是又忘記自己來自昨天還是明天。你習慣先觀察、再行動，但一旦發現值得追尋的謎團，就會毫不猶豫跳進未知的時間裂縫。',
+      tags:['昨天放哪了','等等我想一下','時間旅人'],
+      stats:{social:4, action:8, imagination:5, adventure:8}, rarity:10,
+      attract:['蘑菇治療獅','落葉收藏獅'], clash:['獨角獸溝通獅','軟綿綿棉花獅']
     },
     'light-burst-analysis-explore':{
-      name:"閃電獅", tagline:["耐心和閃電一樣短","森林裡沒人追得上"],
-      desc:"據說牠的耐心和閃電一樣短暫。當別人還在思考時，牠可能已經完成任務回家吃點心了。森林裡很少有人追得上牠。",
-      tags:["三秒就出發","效率至上","快到有殘影"],
-      stats:{social:8, action:10, imagination:4, adventure:10}, rarity:6,
-      attract:["煙火魔法獅","時光魔法獅"], clash:["占星術獅","露珠安眠獅"]
+      name:'雷光疾行獅', tagline:['耐心流失速度和閃電一樣快','森林裡沒人追得上'],
+      desc:'你的腦袋和腳步總是同步加速，想到什麼就立刻開始行動，等待對你來說是世界上最困難的事情。你擅長快速看出事情的重點，並立刻找到最有效率的路線。當大家還在討論要不要出發時，你通常已經完成一半任務了。',
+      tags:['三秒就出發','效率至上','快到有殘影'],
+      stats:{social:8, action:10, imagination:4, adventure:10}, rarity:2,
+      attract:['煙火魔法獅','時光魔法獅'], clash:['占星術獅','露珠安眠獅']
     },
     'light-burst-analysis-guardian':{
-      name:"森林回音獅", tagline:["說話自帶回音效果","常被誤認成森林智者"],
-      desc:"自出生起便擁有回音效果。即使只是說「今天天氣不錯」，聽起來也像在發表改變世界的重要演說。因此經常被誤認為智者。",
-      tags:["音量自帶擴音器","說話像演講","意見領袖"],
-      stats:{social:10, action:10, imagination:5, adventure:6}, rarity:6,
-      attract:["光芒四射獅","落葉收藏獅"], clash:["占星術獅","彩虹調色獅"]
+      name:'森林回音獅', tagline:['自帶喇叭的說話音量','顯得特別有道理'],
+      desc:'你說的每一句話，都會在森林裡迴盪很久。即使只是分享今天午餐吃了什麼，也會聽起來像一場重要宣言。你相信想法能帶來改變，也願意為心中的信念勇敢發聲。當身邊有人不敢說出口時，你總會成為那個站出來替大家傳遞心聲的人。',
+      tags:['自帶擴音器','森林演說家','很有道理的樣子'],
+      stats:{social:10, action:10, imagination:5, adventure:4}, rarity:5,
+      attract:['光芒四射獅','獨角獸溝通獅'], clash:['占星術獅','彩虹調色獅']
     }
   };
 
@@ -714,6 +723,7 @@
   /* ---------------- 狀態 ---------------- */
   var idx = 0;
   var scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+  var answers = [];
   var currentResult = null;
 
   /* ---------------- DOM ---------------- */
@@ -725,7 +735,6 @@
   function showScreen(name){
     Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
   }
-
 
   /* ---------------- 螢火蟲 ---------------- */
   (function initFireflies(){
@@ -760,6 +769,7 @@
     }
     progressTrack.innerHTML = html;
     document.getElementById('q-index').textContent = Math.min(idx+1, n);
+    document.getElementById('q-total').textContent = n;
   }
 
   /* ---------------- 每題全螢幕圖片/影片載入 ---------------- */
@@ -790,25 +800,41 @@
       var btn = document.createElement('button');
       btn.className = 'opt-btn';
       btn.innerHTML = '<span class="opt-glyph">'+OPTION_STAR_ICON+'</span><span>'+o.t+'</span>';
-      btn.addEventListener('click', function(){ pick(o.attr); });
+      btn.addEventListener('click', function(){ pick(o.attrs); });
       qOptions.appendChild(btn);
     });
   }
 
-  function pick(attr){
-    scores[attr] += 1;
-    idx++;
-    if(idx >= QUESTIONS.length){
-      computeResult();
-      showScreen('result');
-      return;
-    }
+  function transitionToQuestion(){
     var content = document.getElementById('quiz-content');
     content.classList.add('fading');
     setTimeout(function(){
       renderQuestion();
       requestAnimationFrame(function(){ content.classList.remove('fading'); });
     }, 220);
+  }
+
+  function pick(attrs){
+    var prev = answers[idx];
+    if(prev){ prev.forEach(function(a){ scores[a.attr] -= a.pts; }); }
+    attrs.forEach(function(a){ scores[a.attr] += a.pts; });
+    answers[idx] = attrs;
+    idx++;
+    if(idx >= QUESTIONS.length){
+      computeResult();
+      showScreen('result');
+      return;
+    }
+    transitionToQuestion();
+  }
+
+  function goBack(){
+    if(idx <= 0){
+      showScreen('start');
+      return;
+    }
+    idx--;
+    transitionToQuestion();
   }
 
   /* ---------------- 結果計算：四軸各自比大小，組成 key 查表 ---------------- */
@@ -836,6 +862,18 @@
     });
   }
 
+  /* 相吸/相剋縮圖：只讀取 png，不使用影片（維持 emoji 佔位圖直到 png 出現） */
+  function renderRelationThumb(container, key){
+    container.innerHTML = '<div class="emoji-fallback">'+LION_EMOJI+'</div>';
+    var img = new Image();
+    img.addEventListener('load', function(){
+      container.innerHTML = '';
+      img.alt = key;
+      container.appendChild(img);
+    });
+    img.src = 'img/lion-' + key + '.png';
+  }
+
   /* ---------------- 魔法能量圖（社交能量／行動速度／想像力／冒險精神） ---------------- */
   var STAT_LABELS = {social:'社交能量', action:'行動速度', imagination:'想像力　', adventure:'冒險精神'};
   function statsHtmlOf(stats){
@@ -859,6 +897,7 @@
     document.getElementById('res-tags').innerHTML =
       '<div class="tag-row">'+tagSpan(lion.tags[0])+tagSpan(lion.tags[1])+'</div>'+
       '<div class="tag-row">'+tagSpan(lion.tags[2])+'</div>';
+    document.getElementById('res-rarity').textContent = '稀有度 '+lion.rarity+'%';
 
     document.getElementById('res-desc').textContent = lion.desc;
     document.getElementById('res-stats').innerHTML = statsHtmlOf(lion.stats);
@@ -868,25 +907,27 @@
     var clash1 = LIONS[NAME_TO_KEY[lion.clash[0]]];
     var clash2 = LIONS[NAME_TO_KEY[lion.clash[1]]];
 
-    renderPortrait(document.getElementById('res-rel-attract-1'), NAME_TO_KEY[lion.attract[0]]);
+    renderRelationThumb(document.getElementById('res-rel-attract-1'), NAME_TO_KEY[lion.attract[0]]);
     document.getElementById('res-rel-attract-1-name').textContent = attract1.name;
-    renderPortrait(document.getElementById('res-rel-attract-2'), NAME_TO_KEY[lion.attract[1]]);
+    renderRelationThumb(document.getElementById('res-rel-attract-2'), NAME_TO_KEY[lion.attract[1]]);
     document.getElementById('res-rel-attract-2-name').textContent = attract2.name;
 
-    renderPortrait(document.getElementById('res-rel-clash-1'), NAME_TO_KEY[lion.clash[0]]);
+    renderRelationThumb(document.getElementById('res-rel-clash-1'), NAME_TO_KEY[lion.clash[0]]);
     document.getElementById('res-rel-clash-1-name').textContent = clash1.name;
-    renderPortrait(document.getElementById('res-rel-clash-2'), NAME_TO_KEY[lion.clash[1]]);
+    renderRelationThumb(document.getElementById('res-rel-clash-2'), NAME_TO_KEY[lion.clash[1]]);
     document.getElementById('res-rel-clash-2-name').textContent = clash2.name;
   }
 
   /* ---------------- 事件 ---------------- */
   document.getElementById('btn-start').addEventListener('click', function(){
-    idx = 0; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
     showScreen('quiz');
     renderQuestion();
   });
+  document.getElementById('btn-back').addEventListener('click', goBack);
+
   document.getElementById('btn-restart').addEventListener('click', function(){
-    idx = 0; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
     showScreen('start');
   });
 
@@ -899,14 +940,10 @@
     var lion = currentResult.lion;
     var actionsEl = document.getElementById('res-actions');
 
-    /* 找出畫面上所有用 <video> 顯示的角色圖容器，截圖時暫時換成靜態圖片
+    /* 相吸/相剋縮圖現在只會讀取 png，不會有 video；只有主角色圖需要在截圖前暫時換成靜態圖片
        （html2canvas 無法正確截取 video 畫面），截圖完成後再換回影片 */
     var portraitSlots = [
-      {el: document.getElementById('res-portrait'), key: currentResult.key},
-      {el: document.getElementById('res-rel-attract-1'), key: NAME_TO_KEY[lion.attract[0]]},
-      {el: document.getElementById('res-rel-attract-2'), key: NAME_TO_KEY[lion.attract[1]]},
-      {el: document.getElementById('res-rel-clash-1'), key: NAME_TO_KEY[lion.clash[0]]},
-      {el: document.getElementById('res-rel-clash-2'), key: NAME_TO_KEY[lion.clash[1]]}
+      {el: document.getElementById('res-portrait'), key: currentResult.key}
     ];
     var restores = [];
 
@@ -920,7 +957,8 @@
             img.alt = slot.key;
             slot.el.appendChild(img);
             restores.push({el: slot.el, html: originalHTML});
-            resolve();
+            /* 確保圖片已完整解碼完成，避免截圖時畫面還沒真正畫上去 */
+            if(img.decode){ img.decode().then(resolve).catch(resolve); } else { resolve(); }
           }, resolve); // 找不到對應靜態圖就維持原樣（video 仍在畫面上，截圖可能是黑畫面）
         });
       }));
@@ -932,7 +970,7 @@
 
     function restoreBtn(){ btn.textContent = originalText; btn.disabled = false; }
 
-    swapVideosForStills().then(function(){
+    swapVideosForStills().then(settle).then(function(){
       if(typeof html2canvas === 'undefined'){
         alert('圖片繪製工具載入失敗，請檢查網路後重試。');
         restoreVideos();
@@ -940,7 +978,9 @@
         return;
       }
       actionsEl.style.display = 'none';
-      html2canvas(document.getElementById('screen-result'), {backgroundColor:'#163849', scale:2})
+      settle().then(function(){
+        return html2canvas(document.getElementById('screen-result'), {backgroundColor:'#03394B', scale:2});
+      })
         .then(function(canvas){
           var link = document.createElement('a');
           link.download = lion.name + '.png';
