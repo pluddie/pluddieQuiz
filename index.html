@@ -939,41 +939,77 @@
 
     var lion = currentResult.lion;
     var actionsEl = document.getElementById('res-actions');
+    var portraitEl = document.getElementById('res-portrait');
+    var originalPortraitHTML = portraitEl.innerHTML;
+    var swapped = false;
 
-    /* 相吸/相剋縮圖現在只會讀取 png，不會有 video；只有主角色圖需要在截圖前暫時換成靜態圖片
-       （html2canvas 無法正確截取 video 畫面），截圖完成後再換回影片 */
-    var portraitSlots = [
-      {el: document.getElementById('res-portrait'), key: currentResult.key}
-    ];
-    var restores = [];
-
-    function swapVideosForStills(){
-      return Promise.all(portraitSlots.map(function(slot){
-        if(!slot.el.querySelector('video')) return Promise.resolve();
-        return new Promise(function(resolve){
-          var originalHTML = slot.el.innerHTML;
-          loadFirstMedia(buildMediaCandidates('img/lion-' + slot.key, false), function(img){
-            slot.el.innerHTML = '';
-            img.alt = slot.key;
-            slot.el.appendChild(img);
-            restores.push({el: slot.el, html: originalHTML});
-            /* 確保圖片已完整解碼完成，避免截圖時畫面還沒真正畫上去 */
-            if(img.decode){ img.decode().then(resolve).catch(resolve); } else { resolve(); }
-          }, resolve); // 找不到對應靜態圖就維持原樣（video 仍在畫面上，截圖可能是黑畫面）
-        });
-      }));
+    /* 截圖前把主角色圖暫時換成「背景圖」的方式顯示（background-image + cover），
+       不要用 <img object-fit>：html2canvas 對 object-fit 支援不完整，會把圖片拉伸變形。
+       相吸/相剋縮圖已經固定只用 png、本來就不會有 video，不需要處理。 */
+    function swapPortraitForCapture(){
+      if(!portraitEl.querySelector('video')) return Promise.resolve();
+      return new Promise(function(resolve){
+        loadFirstMedia(buildMediaCandidates('img/lion-' + currentResult.key, false), function(img){
+          portraitEl.innerHTML = '';
+          var bg = document.createElement('div');
+          bg.style.width = '100%';
+          bg.style.height = '100%';
+          bg.style.backgroundImage = 'url(' + img.src + ')';
+          bg.style.backgroundSize = 'cover';
+          bg.style.backgroundPosition = 'center';
+          portraitEl.appendChild(bg);
+          swapped = true;
+          resolve();
+        }, resolve); // 找不到對應靜態圖就維持原樣（video 仍在畫面上，截圖可能是黑畫面）
+      });
     }
 
-    function restoreVideos(){
-      restores.forEach(function(r){ r.el.innerHTML = r.html; });
+    function restorePortrait(){
+      if(swapped) portraitEl.innerHTML = originalPortraitHTML;
     }
 
     function restoreBtn(){ btn.textContent = originalText; btn.disabled = false; }
 
-    swapVideosForStills().then(settle).then(function(){
+    /* 把截圖結果貼到固定 1080x1920（直式 9:16，Instagram 限時動態尺寸）的畫布上，
+       維持長寬比例置中縮放，四周用底色補滿，不會因為瀏覽器視窗大小不同而每次比例都不一樣 */
+    function composeFixedCanvas(sourceCanvas){
+      var W = 1080, H = 1920;
+      var out = document.createElement('canvas');
+      out.width = W; out.height = H;
+      var ctx = out.getContext('2d');
+      ctx.fillStyle = '#03394B';
+      ctx.fillRect(0, 0, W, H);
+      var scale = Math.min(W / sourceCanvas.width, H / sourceCanvas.height);
+      var w = sourceCanvas.width * scale, h = sourceCanvas.height * scale;
+      ctx.drawImage(sourceCanvas, (W - w) / 2, (H - h) / 2, w, h);
+      return out;
+    }
+
+    function showResultOverlay(dataUrl){
+      var overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(4,10,13,.92);'
+        + 'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;';
+      var img = document.createElement('img');
+      img.src = dataUrl;
+      img.style.cssText = 'max-width:88vw;max-height:70vh;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.5);';
+      var hint = document.createElement('div');
+      hint.textContent = '長按圖片即可儲存到相簿；電腦請點右鍵另存圖片';
+      hint.style.cssText = 'color:#f3ecd9;font-size:13px;text-align:center;';
+      var closeBtn = document.createElement('button');
+      closeBtn.textContent = '關閉';
+      closeBtn.style.cssText = 'background:none;border:1px solid rgba(243,236,217,.4);color:#f3ecd9;'
+        + 'padding:8px 24px;border-radius:999px;font-size:13px;cursor:pointer;';
+      closeBtn.addEventListener('click', function(){ overlay.remove(); });
+      overlay.appendChild(img);
+      overlay.appendChild(hint);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+    }
+
+    swapPortraitForCapture().then(settle).then(function(){
       if(typeof html2canvas === 'undefined'){
         alert('圖片繪製工具載入失敗，請檢查網路後重試。');
-        restoreVideos();
+        restorePortrait();
         restoreBtn();
         return;
       }
@@ -982,12 +1018,19 @@
         return html2canvas(document.getElementById('screen-result'), {backgroundColor:'#03394B', scale:2});
       })
         .then(function(canvas){
+          var finalCanvas = composeFixedCanvas(canvas);
+          var dataUrl = finalCanvas.toDataURL('image/png');
+
+          /* 桌面/Android Chrome 通常可以直接觸發下載；iOS Safari 會擋掉這個動作，
+             所以無論如何都同時顯示圖片讓使用者可以長按儲存，確保各平台都能存得到 */
           var link = document.createElement('a');
           link.download = lion.name + '.png';
-          link.href = canvas.toDataURL('image/png');
+          link.href = dataUrl;
           document.body.appendChild(link);
           link.click();
           link.remove();
+
+          showResultOverlay(dataUrl);
         })
         .catch(function(err){
           console.error('另存魔法獅檔案失敗：', err);
@@ -999,7 +1042,7 @@
         })
         .then(function(){
           actionsEl.style.display = '';
-          restoreVideos();
+          restorePortrait();
           restoreBtn();
         });
     });
