@@ -300,7 +300,7 @@
   .res-tagline{ font-size:11px; line-height:1.4; color:var(--parchment); margin-bottom:16px; }
   .res-name{
     font-family:var(--font-display); font-weight:900; color:var(--gold);
-    font-size:clamp(19px, 3.6vh, 25px); line-height:1.4; margin:0 0 6px;
+    font-size:25px; line-height:1.4; margin:0 0 6px;
   }
   .res-tags{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
   .tag-row{ display:flex; gap:6px; justify-content:flex-start; }
@@ -992,24 +992,22 @@
 
     var lion = currentResult.lion;
     var liveResult = document.getElementById('screen-result');
-    var rect = liveResult.getBoundingClientRect();
+    var TARGET_W = 540, TARGET_H = 960; /* 固定輸出比例 9:16（也就是「16:9」兩個數字），不受目前瀏覽器視窗大小影響 */
 
     function restoreBtn(){ btn.textContent = originalText; btn.disabled = false; }
 
     /* 整個截圖流程都在一份「離屏複製畫面」上進行（使用者完全看不到），
        避免直接修改畫面上正在顯示的內容造成閃爍/跑版 */
     /* html2canvas 不支援 aspect-ratio 這個 CSS 屬性，凡是靠它決定寬高的元素
-       （角色圖框、裝飾星星）截圖時都會跑版。改成用畫面上量到的實際像素尺寸取代它。 */
+       （角色圖框、裝飾星星）截圖時都會跑版。等複製畫面套上固定尺寸、瀏覽器算出正確版面後，
+       再量出這些元素的實際像素尺寸直接寫死，取代 aspect-ratio。 */
     function fixAspectRatioBoxes(clone){
-      var liveEls = liveResult.querySelectorAll('.res-portrait, .deco-star');
-      var cloneEls = clone.querySelectorAll('.res-portrait, .deco-star');
-      liveEls.forEach(function(liveEl, i){
-        var r = liveEl.getBoundingClientRect();
-        var cEl = cloneEls[i];
-        if(!cEl || r.width === 0 || r.height === 0) return;
-        cEl.style.width = r.width + 'px';
-        cEl.style.height = r.height + 'px';
-        cEl.style.aspectRatio = 'auto';
+      clone.querySelectorAll('.res-portrait, .deco-star').forEach(function(el){
+        var r = el.getBoundingClientRect();
+        if(r.width === 0 || r.height === 0) return;
+        el.style.width = r.width + 'px';
+        el.style.height = r.height + 'px';
+        el.style.aspectRatio = 'auto';
       });
     }
 
@@ -1021,8 +1019,8 @@
       clone.style.position = 'fixed';
       clone.style.left = '-9999px';
       clone.style.top = '0';
-      clone.style.width = rect.width + 'px';
-      clone.style.height = rect.height + 'px';
+      clone.style.width = TARGET_W + 'px';
+      clone.style.height = TARGET_H + 'px';
 
       /* 拿掉「再測一次／領取魔法獅檔案」按鈕，其餘版面完全比照畫面上原本的樣子 */
       var actions = clone.querySelector('.res-actions');
