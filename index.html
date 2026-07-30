@@ -998,6 +998,21 @@
 
     /* 整個截圖流程都在一份「離屏複製畫面」上進行（使用者完全看不到），
        避免直接修改畫面上正在顯示的內容造成閃爍/跑版 */
+    /* html2canvas 不支援 aspect-ratio 這個 CSS 屬性，凡是靠它決定寬高的元素
+       （角色圖框、裝飾星星）截圖時都會跑版。改成用畫面上量到的實際像素尺寸取代它。 */
+    function fixAspectRatioBoxes(clone){
+      var liveEls = liveResult.querySelectorAll('.res-portrait, .deco-star');
+      var cloneEls = clone.querySelectorAll('.res-portrait, .deco-star');
+      liveEls.forEach(function(liveEl, i){
+        var r = liveEl.getBoundingClientRect();
+        var cEl = cloneEls[i];
+        if(!cEl || r.width === 0 || r.height === 0) return;
+        cEl.style.width = r.width + 'px';
+        cEl.style.height = r.height + 'px';
+        cEl.style.aspectRatio = 'auto';
+      });
+    }
+
     function buildOffscreenClone(){
       var clone = liveResult.cloneNode(true);
       clone.removeAttribute('id');
@@ -1014,6 +1029,7 @@
       if(actions) actions.style.display = 'none';
 
       document.body.appendChild(clone);
+      fixAspectRatioBoxes(clone);
       return clone;
     }
 
@@ -1037,6 +1053,30 @@
       });
     }
 
+    /* 裝飾星星、相吸/相剋縮圖的 <img> 也一併換成 background-image：
+       跟主角色圖一樣，避免 html2canvas 對 object-fit 支援不完整造成圖案變形 */
+    function fixObjectFitImages(clone){
+      clone.querySelectorAll('.deco-star img').forEach(function(img){
+        replaceWithBackgroundDiv(img, 'contain');
+      });
+      clone.querySelectorAll('.res-rel-thumb img').forEach(function(img){
+        replaceWithBackgroundDiv(img, 'cover');
+      });
+    }
+    function replaceWithBackgroundDiv(img, sizeMode){
+      var wrap = img.parentElement;
+      var src = img.currentSrc || img.src;
+      wrap.removeChild(img);
+      var bg = document.createElement('div');
+      bg.style.width = '100%';
+      bg.style.height = '100%';
+      bg.style.backgroundImage = 'url(' + src + ')';
+      bg.style.backgroundSize = sizeMode;
+      bg.style.backgroundPosition = 'center';
+      bg.style.backgroundRepeat = 'no-repeat';
+      wrap.appendChild(bg);
+    }
+
     function showResultOverlay(dataUrl){
       var overlay = document.createElement('div');
       overlay.className = 'save-overlay';
@@ -1049,6 +1089,7 @@
     }
 
     var clone = buildOffscreenClone();
+    fixObjectFitImages(clone);
 
     swapPortraitInClone(clone).then(settle).then(function(){
       if(typeof html2canvas === 'undefined'){
