@@ -570,7 +570,6 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -609,16 +608,6 @@
     })();
   }
 
-  /* 等網頁字型完全載入、畫面重繪穩定後才 resolve；避免截圖時字型還沒套用造成文字位置跑掉 */
-  function settle(){
-    return (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
-      .then(function(){
-        return new Promise(function(resolve){
-          requestAnimationFrame(function(){ requestAnimationFrame(resolve); });
-        });
-      });
-  }
-
   /* ---------------- 起始頁 Hero 圖片/影片載入 ---------------- */
   (function initHeroMedia(){
     var wrap = document.getElementById('hero-media-wrap');
@@ -647,99 +636,99 @@
      思考方式：fantasy 幻想 / analysis 分析　人生態度：explore 探索 / guardian 守護 */
 
   var QUESTIONS = [
-    { q:'你走進魔法森林的入口<br>來到一片美麗的花田<br>每朵花都散發不同顏色的光芒<br>靠近時還會發出細小的聲音',
-      opts:[ {t:'坐在花旁靜靜聽它發出的聲音，它是在和我說話嗎？', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'靠近花朵，看看它會產生什麼變化和它反應', attrs:[{attr:'light', pts:2}, {attr:'burst', pts:1}]}, {t:'仔細看看每朵花的不同之處，這麼美麗的花是什麼品種呢', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'輕輕替花朵遮住風吹來的方向，脆弱的小花就應該有人陪伴它吧', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
-    { q:'離開花田後你遇見一隻迷路的小鹿<br>牠想回到森林深處 卻忘記回家的方向',
-      opts:[ {t:'陪牠聊聊一路上的經歷，知道牠的故事應該比較會有幫助', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'和牠一起踏上未知的小路，說不定會發現新的風景', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'看看附近留下的痕跡，小鹿來的時候有看到什麼呢', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'陪牠在樹下休息一會，有時候不用急著找到答案', attrs:[{attr:'moon', pts:2}, {attr:'sustain', pts:1}]} ] },
-    { q:'小鹿帶你來到森林深處<br>一棵古老大樹用歌聲守護森林<br>告訴你湖泊就在前方',
-      opts:[ {t:'問問古樹曾經看見過的森林故事，了解這片森林', attrs:[{attr:'analysis', pts:2}, {attr:'guardian', pts:1}]}, {t:'跟著旋律往前走，真好奇這段歌聲會把我帶往哪裡', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'把古樹的歌聲記下來，這段旋律一定值得留下', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'靜靜聽完古樹的歌聲，再跟著旋律前進', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]} ] },
-    { q:'離開古樹後 一群螢光蝴蝶飛過森林<br>牠們散發柔和光芒<br>似乎正在邀請你跟上',
-      opts:[ {t:'追著最亮的蝴蝶前進，它一定知道特別的地方', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'靜靜看著蝴蝶飛舞的方向，牠們好像正在傳遞某種訊息', attrs:[{attr:'moon', pts:2}, {attr:'analysis', pts:1}]}, {t:'嘗試靠近蝴蝶看看牠是否願意停留，也許我們可以成為朋友', attrs:[{attr:'light', pts:2}, {attr:'fantasy', pts:1}]}, {t:'放慢腳步不驚擾飛舞的蝴蝶，跟著牠們保持一段距離', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
-    { q:'往前走去 螢光蝴蝶消失在一片白色迷霧之中<br>前方的道路被白霧覆蓋<br>你只能看見幾步以內的距離',
-      opts:[ {t:'跟著直覺走，也許森林正在用另一種方式指引我', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'等待霧氣慢慢散開再決定下一步，時間會帶來答案', attrs:[{attr:'sustain', pts:2}, {attr:'moon', pts:1}]}, {t:'仔細感受周圍的變化，風的方向、樹葉的聲音都值得注意！', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'發出聲音看看是否有人回應，難道森林裡還有沒有其他夥伴嗎？', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]} ] },
-    { q:'穿過迷霧 眼前是一條古老的吊橋<br>橋的另一端 隱約傳來湖水流動的聲音<br>你不知道這座橋是否安全<br>但似乎只有通過它 才能抵達森林另一端',
-      opts:[ {t:'先仔細查看橋上的狀況再慢慢踏上去，確保安全才能安心前進', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'想像這座橋曾連接過什麼地方，走過這座橋的人有什麼故事', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'深吸一口氣直接踏上搖晃的橋面，冒險就是要跨出第一步！', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'回頭看看是否有其他生物需要幫忙，一起抵達比一個人更重要', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
-    { q:'通過吊橋後 如鏡子般夢幻的湖泊映入眼簾<br>平靜的湖面 浮現出這一路上的旅程畫面',
-      opts:[ {t:'靜靜看著湖面的倒影，原來我們經歷了這麼多啊！', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'想把重要的畫面記錄下來，每段相遇都值得留下', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'想知道湖面之外還藏著什麼，這片森林一定還有更多秘密', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'仔細回想一路遇見的景色，每段旅程都別具意義呢', attrs:[{attr:'analysis', pts:2}, {attr:'moon', pts:1}]} ] },
-    { q:'畫面淡去後的湖面泛起光芒<br>森林中的魔法力量回應你的旅程<br>四個禮物浮現在湖面 示意你帶走一份',
-      opts:[ {t:'一束溫暖的光芒，希望它能陪伴需要力量的人', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'一本記錄森林故事的書，希望美好的回憶都能被好好記住', attrs:[{attr:'light', pts:2}, {attr:'analysis', pts:1}]}, {t:'一條可以通往未知遠方的光之門，隨時探索想去的地方', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'一朵會隨心情變換顏色的魔法花，把色彩分享給經過的每個地方', attrs:[{attr:'fantasy', pts:2}, {attr:'light', pts:1}]} ] } ];
+    { q:'你走進魔法森林的入口<br>來到一片美麗的花田<br>小花們隱約的發出細小的聲音 你會：',
+      opts:[ {t:'坐在花旁靜靜聽它發出的聲音，它是在和我說話嗎？', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'靠近花朵，看看它有什麼反應', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'仔細觀察每朵花的細節，這麼美麗的花是什麼品種呢', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'替花朵遮住強風，這麼美麗的小花值得被好好照顧吧', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'逗留了一會而後 你離開了花田<br>迎面飛來一群美麗的螢光蝴蝶<br>牠們散發著柔和光芒<br>似乎正在邀請你跟上 你會：',
+      opts:[ {t:'追著最亮的蝴蝶前進，它一定知道特別的地方', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'靜靜看著蝴蝶飛舞的美姿，欣賞這奇妙的景象', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'嘗試靠近蝴蝶看看牠是否願意停留，也許我們可以成為朋友', attrs:[{attr:'light', pts:2}, {attr:'fantasy', pts:1}]}, {t:'放慢腳步不驚擾飛舞的蝴蝶，跟著牠們保持一段距離', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'過了不久 螢光蝴蝶消失在一片白色迷霧之中<br>霧裡的樹影若隱若現<br>看不清楚前方的路 你會：',
+      opts:[ {t:'憑著直覺前進，濃霧總會有盡頭的吧？', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'等待霧氣慢慢散開，再決定下一步', attrs:[{attr:'sustain', pts:2}, {attr:'moon', pts:1}]}, {t:'仔細感受周圍的變化，風的方向、樹葉的聲音都值得注意！', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'發出聲音看看是否有人回應，森林裡會有其他夥伴嗎？', attrs:[{attr:'light', pts:2}, {attr:'explore', pts:1}]} ] },
+    { q:'穿過迷霧 眼前是一條古老的吊橋<br>你不知道這座橋是否安全<br>但似乎只有通過它<br>才能抵達森林另一端 你會：',
+      opts:[ {t:'先仔細查看橋上的狀況，確認哪些地方可以踩踏，再慢慢通過', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'停下腳步感受片刻，等待自己準備好，再踏上這段未知旅程', attrs:[{attr:'moon', pts:2}, {attr:'explore', pts:1}]}, {t:'深吸一口氣直接踏上搖晃的橋面，冒險就是要跨出第一步！', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'整理纏繞在橋上的藤蔓，讓這座古老的橋能更安全地通過', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'通過吊橋後你來到森林深處<br>一隻迷路的小麋鹿坐在路旁<br>牠說自己在找回家的方向<br>卻一直找不到路 你會：',
+      opts:[ {t:'陪牠聊聊一路上的經歷，也許能找到幫助牠的方法', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'陪牠重新走回剛才經過的路，一起探索森林裡可能錯過的方向', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'看看附近留下的痕跡，試著推測牠原本來自哪個方向', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'陪牠在樹下休息一會，先讓牠安心下來，再慢慢想辦法', attrs:[{attr:'moon', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'你陪著小麋鹿繼續往森林深處走<br>一棵大樹佇立在前方<br>感受到你們的到來後緩緩睜開眼睛 問道<br>「旅行者，你想知道什麼呢？」你會：',
+      opts:[ {t:'我想知道小麋鹿回家的方向，幫牠找到熟悉的路', attrs:[{attr:'analysis', pts:2}, {attr:'guardian', pts:1}]}, {t:'我想知道森林的另一端，是怎麼樣的風景？', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'小麋鹿現在還在害怕嗎？', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'這座森林是不是有什麼秘密？', attrs:[{attr:'fantasy', pts:2}, {attr:'moon', pts:1}]} ] },
+    { q:'在大樹的指引下 你和小麋鹿繼續往前走<br>眼前出現一座寧靜的湖泊<br>小麋鹿看著湖面 突然停下腳步<br>湖的另一側正是牠一直尋找的家！ 你會：',
+      opts:[ {t:'靜靜望著湖面，想把這一路遇見的景色收藏在心裡', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'看著雀躍的小麋鹿，心裡比找到寶藏還要開心', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'既然麋鹿回家了，我也要繼續踏上旅程了！', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'試著回想一路上的線索，原來每個小細節都有它的意義', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'小麋鹿終於回到了家 牠開心地回頭向你道謝<br>「謝謝你陪我走這麼遠。」<br>「希望這份禮物能陪你繼續旅行。」你會選擇：',
+      opts:[ {t:'一顆躺在河床散發淡淡光芒的水晶石，陪伴你走過黑暗的地方', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'一枝會記錄旅程的樹枝筆，把遇見的人與故事好好收藏', attrs:[{attr:'light', pts:2}, {attr:'analysis', pts:1}]}, {t:'一片會指引方向的幸運草，隨風翻向前方，帶你遇見下一段旅程', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'一朵會隨心情變換顏色的魔法花，讓你的想像化成色彩', attrs:[{attr:'fantasy', pts:2}, {attr:'light', pts:1}]} ] } ];
 
-    var LIONS = {
+  var LIONS = {
     'moon-sustain-fantasy-explore':{
       name:'占星術獅', tagline:['觀察星星與命運','預測今天晚餐吃什麼'],
-      desc:'你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情，總能從平凡事物裡發現不一樣的意義。你習慣先聆聽內心的聲音，再慢慢找到自己的方向，總能發現別人忽略的小小奇蹟。',
+      desc:'你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情。別人眼中的平凡日常，在你眼裡總藏著另一層意義。你相信每顆星星、每場相遇，都藏著某種訊息。即使沒有人能解釋原因，你仍願意追尋那些只有自己看得見的奇妙連結。',
       tags:['浪漫觀測家','靈感收藏家','宇宙腦洞王'],
-      stats:{social:4, action:3, imagination:10, adventure:8}, rarity:55,
+      stats:{social:4, action:4, imagination:10, adventure:8}, rarity:55,
       attract:['彩虹調色獅','露珠安眠獅'], clash:['森林回音獅','雷光疾行獅']
     },
     'moon-sustain-analysis-guardian':{
       name:'落葉收藏獅', tagline:['喜歡收集森林落葉','感知到每片葉片的故事'],
       desc:'你總能在森林裡找到別人忽略的寶物。你記得別人隨口說過的小事，也總能感受到那些微小卻重要的情緒變化。你重情感、珍惜回憶，也珍惜人與人之間細微卻真實的連結。',
       tags:['回憶收藏家','念舊','心思細膩'],
-      stats:{social:4, action:4, imagination:4, adventure:3}, rarity:65,
+      stats:{social:4, action:4, imagination:4, adventure:3}, rarity:60,
       attract:['蘑菇治療獅','軟綿綿棉花獅'], clash:['煙火魔法獅','雷光疾行獅']
     },
     'moon-sustain-analysis-explore':{
       name:'蘑菇治療獅', tagline:['從百種蘑菇製作解方','需要幫助的人都會找你'],
-      desc:'你常出現在潮濕的森林角落研究蘑菇，也總能第一時間發現身邊人的小小需要。你習慣用實際行動表達關心，比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。在森林裡，你是大家遇到困難時，第一個想尋找的可靠夥伴。',
+      desc:'你喜歡在森林角落研究各種蘑菇，總能第一時間發現身邊人的小小需要。比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。你不一定是最會表達關心的人，卻總能記得那些容易被忽略的小事。你習慣用行動告訴別人：「我有注意到你。」',
       tags:['溫柔藥劑師','可靠夥伴','默默守護'],
-      stats:{social:4, action:4, imagination:6, adventure:8}, rarity:75,
+      stats:{social:4, action:4, imagination:5, adventure:7}, rarity:85,
       attract:['落葉收藏獅','時光魔法獅'], clash:['光芒四射獅','煙火魔法獅']
     },
     'light-burst-fantasy-guardian':{
       name:'光芒四射獅', tagline:['走到哪裡都自帶光芒','現場氣氛的開關'],
-      desc:'你總是出現在森林需要一點力量的時候。你喜歡分享自己的熱情，也習慣用一句鼓勵、一個行動，替身邊的人注入勇氣。對你來說，光芒不是為了讓自己被看見，而是希望更多人找到繼續前進的方向。',
+      desc:'你總是在森林需要力量的時候出現。你喜歡替大家帶來笑聲和勇氣，也習慣成為那個先說「沒問題，我們一起想辦法」的人。你相信快樂和希望是可以傳遞的，因此總努力把自己的光分享出去。只是有時候，你太習慣照亮別人，也忘了自己也需要被照顧。',
       tags:['主角光環','熱情發電站','氣氛製造機'],
       stats:{social:10, action:10, imagination:8, adventure:4}, rarity:30,
       attract:['森林回音獅','獨角獸溝通獅'], clash:['占星術獅','落葉收藏獅']
     },
     'light-sustain-fantasy-guardian':{
       name:'獨角獸溝通獅', tagline:['從蝸牛到獨角獸都認識','一路聊天聊到天黑'],
-      desc:'你是一個善於理解他人的人，喜歡傾聽不同的故事，也相信每個生命都有值得被理解的一面。你記得每個人的故事，也習慣成為大家之間的橋樑。你相信每個生命都有自己的語言，也擅長讓原本陌生的彼此慢慢靠近。',
+      desc:'你是一個善於理解他人的人，喜歡傾聽不同的故事，也總能發現那些藏在沉默裡的小心思。你相信沒有人是真的奇怪，只是還沒有遇見懂自己語言的人。因此，你總是不知不覺成為大家靠近彼此的橋樑。',
       tags:['朋友製造機','森林外交官','聊天停不下來'],
-      stats:{social:10, action:4, imagination:9, adventure:4}, rarity:60,
+      stats:{social:6, action:8, imagination:9, adventure:5}, rarity:60,
       attract:['光芒四射獅','軟綿綿棉花獅'], clash:['雷光疾行獅','時光魔法獅']
     },
     'moon-burst-fantasy-explore':{
       name:'彩虹調色獅', tagline:['隨身攜帶彩虹色票','隨著心情揮灑顏色'],
       desc:'你總是帶著一本彩虹色票到處旅行，替世界補上缺少的顏色。你習慣用不同角度看待眼前的一切，從一片落葉、一場雨，到一個不起眼的小角落，都能發現新的靈感。你的世界沒有固定答案，每一天都可能變成一幅全新的作品。',
       tags:['創意爆發','藝術家靈魂','自由萬歲'],
-      stats:{social:4, action:10, imagination:10, adventure:10}, rarity:20,
+      stats:{social:4, action:7, imagination:10, adventure:10}, rarity:20,
       attract:['占星術獅','煙火魔法獅'], clash:['時光魔法獅','森林回音獅']
     },
     'light-sustain-fantasy-explore':{
       name:'露珠安眠獅', tagline:['收集森林清晨的露珠','滴答聲藏著安眠魔法'],
-      desc:'你總是背著露珠瓶在森林裡四處旅行，收集不同地方的夢境聲音。每一滴露珠都有自己的故事，有些來自月光照耀的湖畔，有些來自清晨第一片葉子的尖端。你習慣放慢腳步感受世界，相信世界上最珍貴的發現，往往藏在那些願意慢下腳步的人眼前。',
+      desc:'你總是背著露珠瓶穿梭在森林裡，收集清晨留下的小小聲音。你不急著追上別人的腳步，更喜歡慢慢感受一個地方、一段時間、一份心情。你習慣放慢腳步感受世界，相信世界上最珍貴的發現，往往藏在那些願意慢下腳步的人眼前。',
       tags:['夢境收藏家','療癒系','慢慢來比較快'],
-      stats:{social:8, action:3, imagination:9, adventure:8}, rarity:35,
+      stats:{social:3, action:3, imagination:9, adventure:7}, rarity:35,
       attract:['占星術獅','軟綿綿棉花獅'], clash:['雷光疾行獅','森林回音獅']
     },
     'light-burst-fantasy-explore':{
       name:'煙火魔法獅', tagline:['見義勇為但脾氣暴躁','激動的時候會炸出小火花'],
-      desc:'你經常在森林需要幫助的時候第一個出現。你的情緒像煙火一樣燦爛又直接，開心會發光，生氣也會發光。你的腦中總有許多奇妙點子，想到就忍不住想試試看。偶爾衝得太快，但你的勇氣總能照亮別人不敢前進的方向。',
+      desc:'你總是在森林遇到危機時第一個衝出去。你的情緒像煙火一樣直接，開心時整片森林都知道，生氣時也藏不住心裡的不平。你想到新的點子時，很難只是停留在想像，而是會忍不住馬上試試看。雖然偶爾走得太快，但你的勇氣常常成為別人跨出第一步的理由。',
       tags:['熱血行動派','正義感爆棚','脾氣有點快'],
-      stats:{social:9, action:10, imagination:8, adventure:9}, rarity:15,
+      stats:{social:10, action:10, imagination:8, adventure:6}, rarity:15,
       attract:['彩虹調色獅','雷光疾行獅'], clash:['落葉收藏獅','露珠安眠獅']
     },
     'moon-sustain-fantasy-guardian':{
       name:'軟綿綿棉花獅', tagline:['全身像棉花糖一樣軟','受到攻擊時不會受到攻擊'],
-      desc:'你的身體像棉花糖一樣柔軟，就連衝突碰到你都會慢慢陷進去。你不喜歡爭吵，也不急著證明自己是對的，更願意用理解與包容化解問題。別人以為你的溫柔來自天性，但其實那是一種經過練習的勇敢。',
+      desc:'你的身體像棉花糖一樣柔軟，總能讓靠近你的人感到安心。你不喜歡爭輸贏，也不急著證明自己才是正確的那個人。你更在意的是：「我們能不能好好理解彼此？」別人以為你的溫柔來自天性，但其實那是一種經過練習的勇敢。',
       tags:['抱起來很舒服','柔軟力量','和平代表'],
-      stats:{social:4, action:2, imagination:8, adventure:2}, rarity:45,
+      stats:{social:3, action:5, imagination:5, adventure:3}, rarity:45,
       attract:['落葉收藏獅','露珠安眠獅'], clash:['煙火魔法獅','雷光疾行獅']
     },
     'moon-burst-analysis-explore':{
       name:'時光魔法獅', tagline:['穿梭昨天與明天','最常用來找弄丟的東西'],
-      desc:'你經常消失在森林裡最奇怪的地方。有人說你在追逐時間留下的線索，也有人說你只是又忘記自己來自昨天還是明天。你習慣先觀察、再行動，但一旦發現值得追尋的謎團，就會毫不猶豫跳進未知的時間裂縫。',
+      desc:'你常常在森林裡尋找消失的時間碎片，有時候是為了找回遺忘的小事，有時候只是想知道某個瞬間為什麼如此重要。你習慣先觀察、整理，再做出決定。對你而言，過去不是已經結束的故事，而是理解現在、找到下一步方向的重要線索。',
       tags:['昨天放哪了','等等我想一下','時間旅人'],
-      stats:{social:4, action:8, imagination:5, adventure:8}, rarity:10,
+      stats:{social:3, action:5, imagination:5, adventure:9}, rarity:10,
       attract:['蘑菇治療獅','落葉收藏獅'], clash:['獨角獸溝通獅','軟綿綿棉花獅']
     },
     'light-burst-analysis-explore':{
       name:'雷光疾行獅', tagline:['耐心流失速度和閃電一樣快','森林裡沒人追得上'],
       desc:'你的腦袋和腳步總是同步加速，想到什麼就立刻開始行動，等待對你來說是世界上最困難的事情。你擅長快速看出事情的重點，並立刻找到最有效率的路線。當大家還在討論要不要出發時，你通常已經完成一半任務了。',
       tags:['三秒就出發','效率至上','快到有殘影'],
-      stats:{social:8, action:10, imagination:4, adventure:10}, rarity:2,
+      stats:{social:10, action:7, imagination:3, adventure:10}, rarity:2,
       attract:['煙火魔法獅','時光魔法獅'], clash:['占星術獅','露珠安眠獅']
     },
     'light-burst-analysis-guardian':{
@@ -987,143 +976,52 @@
   document.getElementById('btn-save').addEventListener('click', function(){
     var btn = this;
     var originalText = btn.textContent;
-    btn.textContent = '正在繪製…';
+    btn.textContent = '正在準備…';
     btn.disabled = true;
 
     var lion = currentResult.lion;
-    var liveResult = document.getElementById('screen-result');
-    var TARGET_W = 540, TARGET_H = 960; /* 固定輸出比例 9:16（也就是「16:9」兩個數字），不受目前瀏覽器視窗大小影響 */
+    var key = currentResult.key;
 
     function restoreBtn(){ btn.textContent = originalText; btn.disabled = false; }
 
-    /* 整個截圖流程都在一份「離屏複製畫面」上進行（使用者完全看不到），
-       避免直接修改畫面上正在顯示的內容造成閃爍/跑版 */
-    /* html2canvas 不支援 aspect-ratio 這個 CSS 屬性，凡是靠它決定寬高的元素
-       （角色圖框、裝飾星星）截圖時都會跑版。等複製畫面套上固定尺寸、瀏覽器算出正確版面後，
-       再量出這些元素的實際像素尺寸直接寫死，取代 aspect-ratio。 */
-    function fixAspectRatioBoxes(clone){
-      clone.querySelectorAll('.res-portrait, .deco-star').forEach(function(el){
-        var r = el.getBoundingClientRect();
-        if(r.width === 0 || r.height === 0) return;
-        el.style.width = r.width + 'px';
-        el.style.height = r.height + 'px';
-        el.style.aspectRatio = 'auto';
-      });
-    }
-
-    function buildOffscreenClone(){
-      var clone = liveResult.cloneNode(true);
-      clone.removeAttribute('id');
-      clone.querySelectorAll('[id]').forEach(function(el){ el.removeAttribute('id'); });
-      clone.classList.add('active');
-      clone.style.position = 'fixed';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = TARGET_W + 'px';
-      clone.style.height = TARGET_H + 'px';
-
-      /* 拿掉「再測一次／領取魔法獅檔案」按鈕，其餘版面完全比照畫面上原本的樣子 */
-      var actions = clone.querySelector('.res-actions');
-      if(actions) actions.style.display = 'none';
-
-      document.body.appendChild(clone);
-      fixAspectRatioBoxes(clone);
-      return clone;
-    }
-
-    /* 角色圖若是 video，換成「背景圖 + cover」的 div 呈現：
-       html2canvas 對 <img object-fit> 支援不完整，會把圖片拉伸變形，background-size:cover 才能正確裁切填滿 */
-    function swapPortraitInClone(clone){
-      var portraitEl = clone.querySelector('.res-portrait');
-      if(!portraitEl || !portraitEl.querySelector('video')) return Promise.resolve();
-      return new Promise(function(resolve){
-        loadFirstMedia(buildMediaCandidates('img/lion-' + currentResult.key, false), function(img){
-          portraitEl.innerHTML = '';
-          var bg = document.createElement('div');
-          bg.style.width = '100%';
-          bg.style.height = '100%';
-          bg.style.backgroundImage = 'url(' + img.src + ')';
-          bg.style.backgroundSize = 'cover';
-          bg.style.backgroundPosition = 'center';
-          portraitEl.appendChild(bg);
-          resolve();
-        }, resolve); // 找不到對應靜態圖就維持原樣（video 仍在畫面上，截圖可能是黑畫面）
-      });
-    }
-
-    /* 裝飾星星、相吸/相剋縮圖的 <img> 也一併換成 background-image：
-       跟主角色圖一樣，避免 html2canvas 對 object-fit 支援不完整造成圖案變形 */
-    function fixObjectFitImages(clone){
-      clone.querySelectorAll('.deco-star img').forEach(function(img){
-        replaceWithBackgroundDiv(img, 'contain');
-      });
-      clone.querySelectorAll('.res-rel-thumb img').forEach(function(img){
-        replaceWithBackgroundDiv(img, 'cover');
-      });
-    }
-    function replaceWithBackgroundDiv(img, sizeMode){
-      var wrap = img.parentElement;
-      var src = img.currentSrc || img.src;
-      wrap.removeChild(img);
-      var bg = document.createElement('div');
-      bg.style.width = '100%';
-      bg.style.height = '100%';
-      bg.style.backgroundImage = 'url(' + src + ')';
-      bg.style.backgroundSize = sizeMode;
-      bg.style.backgroundPosition = 'center';
-      bg.style.backgroundRepeat = 'no-repeat';
-      wrap.appendChild(bg);
-    }
-
-    function showResultOverlay(dataUrl){
+    function showResultOverlay(url){
       var overlay = document.createElement('div');
       overlay.className = 'save-overlay';
       overlay.innerHTML =
         '<button class="save-overlay-close" aria-label="關閉">關閉</button>' +
-        '<img src="' + dataUrl + '" alt="' + lion.name + '">' +
+        '<img src="' + url + '" alt="' + lion.name + '">' +
         '<div class="save-overlay-hint">長按圖片即可儲存到相簿；電腦請點右鍵另存圖片</div>';
       overlay.querySelector('.save-overlay-close').addEventListener('click', function(){ overlay.remove(); });
       document.body.appendChild(overlay);
     }
 
-    var clone = buildOffscreenClone();
-    fixObjectFitImages(clone);
-
-    swapPortraitInClone(clone).then(settle).then(function(){
-      if(typeof html2canvas === 'undefined'){
-        alert('圖片繪製工具載入失敗，請檢查網路後重試。');
-        clone.remove();
+    /* 每隻魔法獅的結果頁內容都是固定的（同一隻獅子大家看到的都一樣），
+       所以分享圖一律使用手動準備好的檔案：img/share-{key}.png（或 jpg/jpeg/webp），
+       不再即時截圖產生——避免瀏覽器對某些 CSS 支援不完整造成的跑版問題。 */
+    var exts = ['png', 'jpg', 'jpeg', 'webp'];
+    var i = 0;
+    (function tryNext(){
+      if(i >= exts.length){
+        alert('「' + lion.name + '」的分享圖還沒準備好，請把 img/share-' + key + '.png 放進 img 資料夾。');
         restoreBtn();
         return;
       }
-      html2canvas(clone, {backgroundColor:'#03394B', scale:2})
-        .then(function(canvas){
-          var dataUrl = canvas.toDataURL('image/png');
-
-          /* 桌面/Android Chrome 通常可以直接觸發下載；iOS Safari 會擋掉這個動作，
-             所以無論如何都同時顯示圖片讓使用者可以長按儲存，確保各平台都能存得到 */
-          var link = document.createElement('a');
-          link.download = lion.name + '.png';
-          link.href = dataUrl;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-
-          showResultOverlay(dataUrl);
-        })
-        .catch(function(err){
-          console.error('另存魔法獅檔案失敗：', err);
-          if(location.protocol === 'file:'){
-            alert('圖片繪製失敗。這通常是因為直接雙擊開啟 html 檔案（網址是 file:// 開頭）造成的瀏覽器安全限制——瀏覽器會擋掉「把本機圖片畫成圖檔」這個動作。\n\n請把整個資料夾（html + img）放到正式的網站空間再試（例如 GitHub Pages、Netlify，或用 VS Code 的 Live Server 之類的本機伺服器打開），存檔功能就會恢復正常。');
-          } else {
-            alert('圖片繪製失敗，請再試一次。');
-          }
-        })
-        .then(function(){
-          clone.remove();
-          restoreBtn();
-        });
-    });
+      var ext = exts[i++];
+      var testImg = new Image();
+      testImg.addEventListener('load', function(){
+        var url = 'img/share-' + key + '.' + ext;
+        var link = document.createElement('a');
+        link.download = lion.name + '.png';
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        showResultOverlay(url);
+        restoreBtn();
+      });
+      testImg.addEventListener('error', tryNext);
+      testImg.src = 'img/share-' + key + '.' + ext;
+    })();
   });
 
 })();
