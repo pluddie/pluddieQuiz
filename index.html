@@ -247,12 +247,12 @@
   .opt-btn{
     text-align:left; font-family:var(--font-body); font-size:12px; line-height:1.4;
     color:var(--parchment); background:var(--block-bg);
-    border:none; border-radius:14px;
-    padding:11px 13px; cursor:pointer; display:flex; align-items:flex-start; gap:9px;
+    border:none; border-radius:14px; min-height:56px;
+    padding:11px 13px; cursor:pointer; display:flex; align-items:center; gap:9px;
     transition:background .15s, transform .12s;
   }
   .opt-btn:active{ transform:scale(.97); background:var(--bar-bg); }
-  .opt-glyph{ flex-shrink:0; width:14px; height:14px; opacity:.9; margin-top:2px; }
+  .opt-glyph{ flex-shrink:0; width:14px; height:14px; opacity:.9; }
 
   /* ---------- 結果畫面 ---------- */
   #screen-result{ padding:0; background:#03394B; }
@@ -558,7 +558,7 @@
           </div>
         </div>
 
-        <div class="res-actions" id="res-actions">
+        <div class="res-actions">
           <button class="btn-ghost" id="btn-restart">再測一次</button>
           <button class="btn-share" id="btn-save">領取魔法獅檔案</button>
         </div>
@@ -658,105 +658,91 @@
       name:'占星術獅', tagline:['觀察星星與命運','預測今天晚餐吃什麼'],
       desc:'你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情。別人眼中的平凡日常，在你眼裡總藏著另一層意義。你相信每顆星星、每場相遇，都藏著某種訊息。即使沒有人能解釋原因，你仍願意追尋那些只有自己看得見的奇妙連結。',
       tags:['浪漫觀測家','靈感收藏家','宇宙腦洞王'],
-      stats:{social:4, action:4, imagination:10, adventure:8}, rarity:55,
-      attract:['彩虹調色獅','露珠安眠獅'], clash:['森林回音獅','雷光疾行獅']
+      stats:{social:3, action:3, imagination:10, adventure:8}, rarity:5,
+      attract:['彩虹調色獅','時光魔法獅'], clash:['森林回音獅','雷光疾行獅']
     },
     'moon-sustain-analysis-guardian':{
       name:'落葉收藏獅', tagline:['喜歡收集森林落葉','感知到每片葉片的故事'],
       desc:'你總能在森林裡找到別人忽略的寶物。你記得別人隨口說過的小事，也總能感受到那些微小卻重要的情緒變化。你重情感、珍惜回憶，也珍惜人與人之間細微卻真實的連結。',
       tags:['回憶收藏家','念舊','心思細膩'],
-      stats:{social:4, action:4, imagination:4, adventure:3}, rarity:60,
+      stats:{social:4, action:3, imagination:5, adventure:3}, rarity:60,
       attract:['蘑菇治療獅','軟綿綿棉花獅'], clash:['煙火魔法獅','雷光疾行獅']
     },
-    'moon-sustain-analysis-explore':{
+    'light-sustain-analysis-guardian':{
       name:'蘑菇治療獅', tagline:['從百種蘑菇製作解方','需要幫助的人都會找你'],
       desc:'你喜歡在森林角落研究各種蘑菇，總能第一時間發現身邊人的小小需要。比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。你不一定是最會表達關心的人，卻總能記得那些容易被忽略的小事。你習慣用行動告訴別人：「我有注意到你。」',
       tags:['溫柔藥劑師','可靠夥伴','默默守護'],
-      stats:{social:4, action:4, imagination:5, adventure:7}, rarity:85,
-      attract:['落葉收藏獅','時光魔法獅'], clash:['光芒四射獅','煙火魔法獅']
+      stats:{social:3, action:4, imagination:4, adventure:5}, rarity:80,
+      attract:['落葉收藏獅','獨角獸溝通獅'], clash:['彩虹調色獅','煙火魔法獅']
     },
     'light-burst-fantasy-guardian':{
       name:'光芒四射獅', tagline:['走到哪裡都自帶光芒','現場氣氛的開關'],
-      desc:'你總是在森林需要力量的時候出現。你喜歡替大家帶來笑聲和勇氣，也習慣成為那個先說「沒問題，我們一起想辦法」的人。你相信快樂和希望是可以傳遞的，因此總努力把自己的光分享出去。只是有時候，你太習慣照亮別人，也忘了自己也需要被照顧。',
+      desc:'你總是在森林需要力量的時候出現，你帶來笑聲和勇氣。你習慣成為那個「沒問題，我們一起想辦法」的人，並相信快樂和希望可以傳遞，因此總努力把自己的光分享出去。只是有時候太習慣照亮別人，忘了自己也需要被照顧。',
       tags:['主角光環','熱情發電站','氣氛製造機'],
-      stats:{social:10, action:10, imagination:8, adventure:4}, rarity:30,
-      attract:['森林回音獅','獨角獸溝通獅'], clash:['占星術獅','落葉收藏獅']
+      stats:{social:10, action:8, imagination:7, adventure:4}, rarity:20,
+      attract:['獨角獸溝通獅','煙火魔法獅'], clash:['軟綿綿棉花獅','時光魔法獅']
     },
     'light-sustain-fantasy-guardian':{
       name:'獨角獸溝通獅', tagline:['從蝸牛到獨角獸都認識','一路聊天聊到天黑'],
       desc:'你是一個善於理解他人的人，喜歡傾聽不同的故事，也總能發現那些藏在沉默裡的小心思。你相信沒有人是真的奇怪，只是還沒有遇見懂自己語言的人。因此，你總是不知不覺成為大家靠近彼此的橋樑。',
       tags:['朋友製造機','森林外交官','聊天停不下來'],
-      stats:{social:6, action:8, imagination:9, adventure:5}, rarity:60,
-      attract:['光芒四射獅','軟綿綿棉花獅'], clash:['雷光疾行獅','時光魔法獅']
+      stats:{social:9, action:3, imagination:8, adventure:5}, rarity:25,
+      attract:['光芒四射獅','蘑菇治療獅'], clash:['雷光疾行獅','占星術獅']
     },
     'moon-burst-fantasy-explore':{
       name:'彩虹調色獅', tagline:['隨身攜帶彩虹色票','隨著心情揮灑顏色'],
       desc:'你總是帶著一本彩虹色票到處旅行，替世界補上缺少的顏色。你習慣用不同角度看待眼前的一切，從一片落葉、一場雨，到一個不起眼的小角落，都能發現新的靈感。你的世界沒有固定答案，每一天都可能變成一幅全新的作品。',
       tags:['創意爆發','藝術家靈魂','自由萬歲'],
-      stats:{social:4, action:7, imagination:10, adventure:10}, rarity:20,
-      attract:['占星術獅','煙火魔法獅'], clash:['時光魔法獅','森林回音獅']
+      stats:{social:5, action:8, imagination:10, adventure:10}, rarity:20,
+      attract:['占星術獅','煙火魔法獅'], clash:['落葉收藏獅','蘑菇治療獅']
     },
     'light-sustain-fantasy-explore':{
       name:'露珠安眠獅', tagline:['收集森林清晨的露珠','滴答聲藏著安眠魔法'],
       desc:'你總是背著露珠瓶穿梭在森林裡，收集清晨留下的小小聲音。你不急著追上別人的腳步，更喜歡慢慢感受一個地方、一段時間、一份心情。你習慣放慢腳步感受世界，相信世界上最珍貴的發現，往往藏在那些願意慢下腳步的人眼前。',
       tags:['夢境收藏家','療癒系','慢慢來比較快'],
-      stats:{social:3, action:3, imagination:9, adventure:7}, rarity:35,
-      attract:['占星術獅','軟綿綿棉花獅'], clash:['雷光疾行獅','森林回音獅']
+      stats:{social:6, action:2, imagination:8, adventure:4}, rarity:60,
+      attract:['占星術獅','軟綿綿棉花獅'], clash:['雷光疾行獅','煙火魔法獅']
     },
     'light-burst-fantasy-explore':{
       name:'煙火魔法獅', tagline:['見義勇為但脾氣暴躁','激動的時候會炸出小火花'],
-      desc:'你總是在森林遇到危機時第一個衝出去。你的情緒像煙火一樣直接，開心時整片森林都知道，生氣時也藏不住心裡的不平。你想到新的點子時，很難只是停留在想像，而是會忍不住馬上試試看。雖然偶爾走得太快，但你的勇氣常常成為別人跨出第一步的理由。',
+      desc:'你總是在森林遇到危機時第一個衝出去。你的情緒像煙火一樣直接，開心或生氣都藏不住。看到值得努力的事，你很難袖手旁觀。你的熱情來得快，也燒得亮，只要相信一件事值得做，就很難停下來。',
       tags:['熱血行動派','正義感爆棚','脾氣有點快'],
-      stats:{social:10, action:10, imagination:8, adventure:6}, rarity:15,
-      attract:['彩虹調色獅','雷光疾行獅'], clash:['落葉收藏獅','露珠安眠獅']
+      stats:{social:9, action:10, imagination:8, adventure:5}, rarity:15,
+      attract:['光芒四射獅','雷光疾行獅'], clash:['落葉收藏獅','露珠安眠獅']
     },
     'moon-sustain-fantasy-guardian':{
       name:'軟綿綿棉花獅', tagline:['全身像棉花糖一樣軟','受到攻擊時不會受到攻擊'],
       desc:'你的身體像棉花糖一樣柔軟，總能讓靠近你的人感到安心。你不喜歡爭輸贏，也不急著證明自己才是正確的那個人。你更在意的是：「我們能不能好好理解彼此？」別人以為你的溫柔來自天性，但其實那是一種經過練習的勇敢。',
       tags:['抱起來很舒服','柔軟力量','和平代表'],
-      stats:{social:3, action:5, imagination:5, adventure:3}, rarity:45,
-      attract:['落葉收藏獅','露珠安眠獅'], clash:['煙火魔法獅','雷光疾行獅']
+      stats:{social:4, action:2, imagination:6, adventure:3}, rarity:8,
+      attract:['落葉收藏獅','露珠安眠獅'], clash:['光芒四射獅','雷光疾行獅']
     },
     'moon-burst-analysis-explore':{
       name:'時光魔法獅', tagline:['穿梭昨天與明天','最常用來找弄丟的東西'],
-      desc:'你常常在森林裡尋找消失的時間碎片，有時候是為了找回遺忘的小事，有時候只是想知道某個瞬間為什麼如此重要。你習慣先觀察、整理，再做出決定。對你而言，過去不是已經結束的故事，而是理解現在、找到下一步方向的重要線索。',
+      desc:'你常常在森林裡尋找消失的時間碎片，有時是為了找回遺忘的小事，有時只是想知道某個瞬間為什麼如此重要。你習慣先觀察、整理，再做出決定。對你而言，過去不是結束的故事，而是理解現在、找到下一步的重要線索。',
       tags:['昨天放哪了','等等我想一下','時間旅人'],
-      stats:{social:3, action:5, imagination:5, adventure:9}, rarity:10,
-      attract:['蘑菇治療獅','落葉收藏獅'], clash:['獨角獸溝通獅','軟綿綿棉花獅']
+      stats:{social:3, action:5, imagination:4, adventure:7}, rarity:75,
+      attract:['蘑菇治療獅','占星術獅'], clash:['煙火魔法獅','光芒四射獅']
     },
     'light-burst-analysis-explore':{
       name:'雷光疾行獅', tagline:['耐心流失速度和閃電一樣快','森林裡沒人追得上'],
       desc:'你的腦袋和腳步總是同步加速，想到什麼就立刻開始行動，等待對你來說是世界上最困難的事情。你擅長快速看出事情的重點，並立刻找到最有效率的路線。當大家還在討論要不要出發時，你通常已經完成一半任務了。',
       tags:['三秒就出發','效率至上','快到有殘影'],
-      stats:{social:10, action:7, imagination:3, adventure:10}, rarity:2,
-      attract:['煙火魔法獅','時光魔法獅'], clash:['占星術獅','露珠安眠獅']
+      stats:{social:10, action:9, imagination:3, adventure:8}, rarity:15,
+      attract:['煙火魔法獅','光芒四射獅'], clash:['露珠安眠獅','軟綿綿棉花獅']
     },
     'light-burst-analysis-guardian':{
       name:'森林回音獅', tagline:['自帶喇叭的說話音量','顯得特別有道理'],
       desc:'你說的每一句話，都會在森林裡迴盪很久。即使只是分享今天午餐吃了什麼，也會聽起來像一場重要宣言。你相信想法能帶來改變，也願意為心中的信念勇敢發聲。當身邊有人不敢說出口時，你總會成為那個站出來替大家傳遞心聲的人。',
       tags:['自帶擴音器','森林演說家','很有道理的樣子'],
-      stats:{social:10, action:10, imagination:5, adventure:4}, rarity:5,
-      attract:['光芒四射獅','獨角獸溝通獅'], clash:['占星術獅','彩虹調色獅']
+      stats:{social:10, action:8, imagination:4, adventure:2}, rarity:25,
+      attract:['光芒四射獅','獨角獸溝通獅'], clash:['占星術獅','軟綿綿棉花獅']
     }
   };
 
   /* 名字 → key 反查表（相吸/相剋用名字記錄，這裡轉回 key 方便取圖與資料） */
   var NAME_TO_KEY = {};
   Object.keys(LIONS).forEach(function(k){ NAME_TO_KEY[LIONS[k].name] = k; });
-
-  /* 找不到對應組合時（16 種組合中有 4 種未列在對照表），取屬性最相近的角色頂替 */
-  function nearestLionKey(targetKey){
-    if(LIONS[targetKey]) return targetKey;
-    var targetParts = targetKey.split('-');
-    var bestKey = null, bestScore = -1;
-    Object.keys(LIONS).forEach(function(k){
-      var parts = k.split('-');
-      var score = 0;
-      for(var i=0;i<4;i++){ if(parts[i]===targetParts[i]) score++; }
-      if(score > bestScore){ bestScore = score; bestKey = k; }
-    });
-    return bestKey;
-  }
 
   /* ---------------- 狀態 ---------------- */
   var idx = 0;
@@ -879,16 +865,34 @@
     transitionToQuestion();
   }
 
-  /* ---------------- 結果計算：四軸各自比大小，組成 key 查表 ---------------- */
-  function computeResult(){
-    var charge   = (scores.light > scores.moon) ? 'light' : 'moon';
-    var action   = (scores.burst > scores.sustain) ? 'burst' : 'sustain';
-    var thinking = (scores.fantasy >= scores.analysis) ? 'fantasy' : 'analysis';
-    var attitude = (scores.explore >= scores.guardian) ? 'explore' : 'guardian';
+  /* ---------------- 結果計算：換算成4維人格座標，取距離最近的魔法獅 ---------------- */
+  function axisScore(a, b){
+    /* a、b 兩側分數換算成 0～10 座標；兩側都是 0 分時（使用者完全沒碰到這個維度）視為中性值 5 */
+    var total = scores[a] + scores[b];
+    return total > 0 ? (scores[a] / total) * 10 : 5;
+  }
 
-    var rawKey = charge + '-' + action + '-' + thinking + '-' + attitude;
-    var key = nearestLionKey(rawKey);
-    currentResult = { key:key, lion:LIONS[key] };
+  function computeResult(){
+    var coord = {
+      social:      axisScore('light', 'moon'),
+      action:      axisScore('burst', 'sustain'),
+      imagination: axisScore('fantasy', 'analysis'),
+      adventure:   axisScore('explore', 'guardian')
+    };
+
+    var bestKey = null, bestDist = Infinity;
+    Object.keys(LIONS).forEach(function(k){
+      var s = LIONS[k].stats;
+      var d = Math.sqrt(
+        Math.pow(coord.social - s.social, 2) +
+        Math.pow(coord.action - s.action, 2) +
+        Math.pow(coord.imagination - s.imagination, 2) +
+        Math.pow(coord.adventure - s.adventure, 2)
+      );
+      if(d < bestDist){ bestDist = d; bestKey = k; }
+    });
+
+    currentResult = { key:bestKey, lion:LIONS[bestKey] };
     renderResult();
   }
 
