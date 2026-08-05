@@ -22,6 +22,14 @@
   }
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
+  /* 隱藏 iOS Safari 在自動播放被擋掉時，自己疊上去的播放三角形按鈕；
+     擋不掉自動播放沒辦法，但至少不要讓畫面看起來像壞掉的影片 */
+  video::-webkit-media-controls,
+  video::-webkit-media-controls-start-playback-button,
+  video::-webkit-media-controls-overlay-play-button{
+    display:none !important;
+    -webkit-appearance:none;
+  }
   body{
     position:relative;
     min-height:100dvh;
@@ -39,8 +47,8 @@
   .forest-bg{
     position:fixed; inset:0; z-index:0;
     background:
-      radial-gradient(60% 45% at 20% 10%, rgba(255,255,255,0.04), transparent 60%),
-      radial-gradient(60% 50% at 85% 90%, rgba(255,255,255,0.03), transparent 60%),
+      radial-gradient(220px 180px at 15% 12%, rgba(255,255,255,0.05), transparent 100%),
+      radial-gradient(220px 180px at 85% 88%, rgba(255,255,255,0.04), transparent 100%),
       var(--outer-bg);
   }
   .firefly{
@@ -57,7 +65,7 @@
   .app-shell{
     position:relative; z-index:2;
     aspect-ratio:9/16;
-    height:min(calc(100dvh - 32px), calc(100vw * 16 / 9), 740px);
+    height:min(calc(100dvh - 64px), calc(100vw * 16 / 9), 740px);
     width:auto;
     display:flex; flex-direction:column;
     background:var(--bg-deep);
