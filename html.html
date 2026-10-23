@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#17394A">
+<title>魔法花花獅圖鑑：探索你魔法潛力</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#17394A;
+    --night:#0e2630;      /* 寬螢幕右側星空底色：量測自左邊插畫下方的深色（截圖是 P3 色域，已換算成網頁用的 sRGB） */
+    --parchment:#f3ecd9;
+    --parchment-dim:#c9c0a6;
+    --gold:#f5e7a6;
+    --title-teal:#F3E8AE;
+    --block-bg:#225772;
+
+    --stripes:repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 12px, rgba(255,255,255,.015) 12px 24px);   /* 圖片還沒放時的斜紋佔位 */
+  }
+  *{box-sizing:border-box;}
+  button{ font-family:inherit; }
+  html,body{height:100%;margin:0;}
+  /* 隱藏 iOS Safari 在自動播放被擋掉時，自己疊上去的播放三角形按鈕；
+     擋不掉自動播放沒辦法，但至少不要讓畫面看起來像壞掉的影片 */
+  video::-webkit-media-controls,
+  video::-webkit-media-controls-start-playback-button,
+  video::-webkit-media-controls-overlay-play-button{
+    display:none !important;
+    -webkit-appearance:none;
+  }
+  /* 保護插畫：不能拖曳、不跳出「儲存圖片」、手機長按不跳出存檔選單 */
+  img, video, canvas{
+    -webkit-user-drag:none; -webkit-touch-callout:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ pointer-events:none; }
+
+  body{
+    height:100dvh;
+    overflow:hidden;
+    background:var(--bg-deep);
+    color:var(--parchment);
+    font-family:'Noto Sans TC', sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ---------- App shell：滿版全螢幕（沉浸式） ---------- */
+  .app-shell{
+    position:relative;
+    width:100%; height:100dvh;
+    display:flex; flex-direction:column;
+    background:var(--bg-deep);
+    overflow:hidden;
+  }
+
+  .screen-stack{ position:relative; z-index:1; flex:1; min-height:0; }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; transform:scale(.98);
+    pointer-events:none;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+  .screen.active{ opacity:1; transform:scale(1); pointer-events:auto; }
+
+  /* ---------- 全螢幕背景（首頁 / 題目 共用） ----------
+     手機（直式）：插畫滿版鋪滿，文字浮在上面。
+     寬螢幕（電腦/橫向平板）：左右分割 —— 左邊是插畫（比 9:16 稍寬，下方空白處會被裁掉），右邊是內容＋漂浮星空。 */
+  .media-wrap{
+    position:absolute; inset:0; width:100%; height:100%;
+    overflow:hidden; background:#0a2733;
+  }
+  .media-wrap img, .media-wrap video{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  }
+  .media-placeholder{
+    position:absolute; inset:0;
+    background:var(--stripes);
+  }
+
+  /* 漂浮星空（只在寬螢幕的右側/空白處出現） */
+  .starfield{
+    position:absolute; inset:0; z-index:0; display:none; pointer-events:none;
+    background:var(--night);
+  }
+  .app-shell.on-result .starfield{ display:block; }     /* 手機結果頁也顯示星空（深藍底＋光點） */
+  .fleck{
+    position:absolute; left:var(--x); bottom:-12px; width:var(--s); height:var(--s);
+    border-radius:50%; background:var(--gold); box-shadow:0 0 8px 2px rgba(245,231,166,.55);
+    opacity:0; animation:fleckFloat var(--d) linear var(--dl) infinite;
+  }
+  @keyframes fleckFloat{
+    0%{ transform:translate(0,0); opacity:0; }
+    12%{ opacity:.85; }
+    50%{ transform:translate(var(--dx), -55dvh); }
+    88%{ opacity:.7; }
+    100%{ transform:translate(0,-112dvh); opacity:0; }
+  }
+
+  /* ---------- 起始畫面：Hero 全螢幕，文字浮在中下方 ---------- */
+  #screen-start{ text-align:center; }
+
+  .start-overlay{
+    position:absolute; inset:0; z-index:1;
+    display:flex; flex-direction:column; justify-content:flex-end; align-items:center;
+  }
+  .start-scrim{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background:linear-gradient(to top,
+      rgba(15,51,67,.96) 0%,
+      rgba(15,51,67,.82) 30%,
+      rgba(15,51,67,.35) 62%,
+      rgba(15,51,67,0) 85%);
+  }
+  .start-spark{ position:absolute; z-index:2; opacity:.9; pointer-events:none; }
+  .start-spark.sp1{ top:5%; left:6%; width:22px; }
+  .start-spark.sp2{ top:9%; right:8%; width:14px; }
+
+  .start-text{
+    position:relative; z-index:1;
+    width:100%; max-width:480px;
+    padding:0 26px 8px;
+  }
+  h1.title{
+    font-weight:900;
+    font-size:clamp(23px, 4.4vh, 30px); line-height:1.34; margin:0 0 14px;
+    color:var(--title-teal);
+  }
+  h1.title .line2{ font-weight:900; margin-top:4px; }
+  .quote-block{ margin:0 auto 20px; max-width:280px; }
+  .wave-line{ display:block; width:170px; height:9px; margin:0 auto; opacity:.55; }
+  .lede-quote, .lede, .lede2{ font-size:13px; line-height:1.5; color:#ffffff; font-weight:500; }
+  .lede-quote{ line-height:1.55; margin:8px 0; }
+  .lede{ max-width:300px; margin:0 auto 14px; }
+  .lede2{ max-width:280px; margin:0 auto; }
+  .start-cta{
+    position:relative; z-index:1;
+    flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+    width:100%; max-width:480px;
+    padding:18px 26px calc(30px + env(safe-area-inset-bottom));
+  }
+  .btn-primary{
+    font-weight:700; font-size:14px;
+    color:var(--parchment); background:var(--block-bg);
+    border:none; border-radius:999px; padding:11px 36px;
+    cursor:pointer; letter-spacing:.03em;
+    transition:transform .15s ease, background-color .9s ease, color .9s ease;
+  }
+  .btn-primary:hover{ background-color:var(--title-teal); color:var(--bg-deep); }
+  .btn-primary:active{ transform:scale(.96); }
+
+  /* ---------- 測驗畫面：全螢幕背景 + 簡潔直線進度 + 4 選項 ---------- */
+  .quiz-content{
+    position:absolute; inset:0;
+    transition:opacity .22s ease;
+  }
+  .quiz-content.fading{ opacity:0; }
+
+  .quiz-overlay{
+    position:absolute; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center;
+    padding:calc(18px + env(safe-area-inset-top)) 20px calc(22px + env(safe-area-inset-bottom));
+  }
+  .quiz-overlay > .progress-wrap,
+  .quiz-overlay > .q-body,
+  .quiz-overlay > .options{ width:100%; max-width:520px; }
+  .quiz-scrim-top{
+    position:absolute; top:0; left:0; right:0; height:34%; z-index:0; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(15,51,67,.85) 0%, rgba(15,51,67,0) 100%);
+  }
+  .quiz-scrim-bottom{
+    position:absolute; bottom:0; left:0; right:0; height:56%; z-index:0; pointer-events:none;
+    background:linear-gradient(to top, rgba(15,51,67,.92) 0%, rgba(15,51,67,.55) 45%, rgba(15,51,67,0) 100%);
+  }
+
+  .progress-wrap{ position:relative; z-index:1; flex-shrink:0; }
+  .progress-label{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11.5px; color:var(--parchment-dim); margin-bottom:8px; letter-spacing:.05em;
+  }
+  .progress-label b{ color:var(--gold); font-weight:700; }
+  .btn-back{
+    background:none; border:none; padding:2px; cursor:pointer;
+    color:var(--parchment); display:flex; align-items:center;
+  }
+  .btn-back svg{ width:18px; height:18px; }
+  .progress-line-wrap{ position:relative; height:18px; }
+  .progress-line-bg{
+    position:absolute; top:50%; left:2%; right:2%; height:2px;
+    background:rgba(243,236,217,.28); transform:translateY(-50%); border-radius:2px;
+  }
+  .progress-line-fill{
+    position:absolute; top:50%; left:2%; height:2px; width:0%;
+    background:var(--gold); transform:translateY(-50%); border-radius:2px;
+    transition:width .3s ease;
+  }
+  .progress-star{
+    position:absolute; top:50%; width:13px; height:13px;
+    transform:translate(-50%,-50%); transition:opacity .3s ease, transform .3s ease;
+  }
+  .progress-star.todo{ opacity:.4; }
+  .progress-star.done{ opacity:1; }
+  .progress-star.now{ opacity:1; transform:translate(-50%,-50%) scale(1.35); filter:drop-shadow(0 0 5px rgba(227,174,83,.85)); }
+
+  .q-body{
+    position:relative; z-index:1;
+    flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-end;
+    align-items:stretch;
+    padding:10px 0 0;
+  }
+  .q-text{
+    font-weight:700;
+    font-size:clamp(11px, 1.9vh, 13px); line-height:1.6;
+    color:var(--parchment);
+    text-shadow:0 2px 14px rgba(0,0,0,.4);
+    text-align:left;
+    width:100%;
+    margin:0;
+  }
+  .options{
+    position:relative; z-index:1; flex-shrink:0;
+    display:flex; flex-direction:column; gap:8px;
+    margin-top:16px;
+  }
+  .opt-btn{
+    position:relative;
+    text-align:left; font-size:12px; line-height:1.4;
+    color:var(--parchment); background:var(--block-bg);
+    border:none; border-radius:14px; min-height:44px;
+    padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;
+    transition:transform .12s;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .opt-btn::after{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    background:linear-gradient(90deg, #2f8f8a, #5be0ff);
+    opacity:0; transition:opacity .9s ease; pointer-events:none; z-index:0;
+  }
+  @media (hover:hover){
+    .opt-btn:hover::after{ opacity:.85; }
+  }
+  .opt-btn:active{ transform:scale(.97); }
+  .opt-btn > *{ position:relative; z-index:1; }
+  .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
+
+  /* ---------- 結果畫面 ---------- */
+  /* 手機：結果卡片（正面＝整張 9:16 結果圖，背面＝卡片背面）。
+     卡片大小隨視窗縮放、形狀跟著圖片比例走，所以不會裁切；手指拖過去會傾斜，點一下或按「翻轉卡片」翻面 */
+  .res-card-wrap{
+    flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
+    padding:calc(12px + env(safe-area-inset-top)) 0 4px;
+    perspective:1100px; touch-action:none;
+  }
+  .rc-tilt{
+    width:min(88vw, calc((100dvh - 200px) * var(--rc-ratio, .5625)));
+    aspect-ratio:var(--rc-ratio, .5625);
+    transform-style:preserve-3d;
+    transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:transform .25s ease-out;
+    animation:cardFloat 5s ease-in-out infinite;
+  }
+  @keyframes cardFloat{ 0%,100%{ translate:0 0; } 50%{ translate:0 -6px; } }
+  .rc-card{
+    position:relative; width:100%; height:100%;
+    transform-style:preserve-3d; transition:transform .7s cubic-bezier(.3,.7,.2,1);
+  }
+  .rc-card.flipped{ transform:rotateY(180deg); }
+  .rc-face{
+    position:absolute; inset:0; border-radius:22px; overflow:hidden;
+    backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.4);
+  }
+  .rc-front > img, .rc-back > img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .rc-front.empty{ background:var(--stripes); }
+  .rc-back{ transform:rotateY(180deg); }
+  .rc-back, .rw-card{
+    background:linear-gradient(160deg, #0f3a4c, #0a2a38 60%, #07202c);
+    border:1px solid rgba(245,231,166,.45);
+  }
+
+  /* 角色名片內容：手機卡片背面、電腦版左側卡片共用（上方是圖＋文字，只有頁尾固定在卡片最下面） */
+  .card-art{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    gap:8px; padding:7% 8% 5%; text-align:center; color:var(--parchment);
+  }
+  .ca-eyebrow{ font-size:12px; letter-spacing:.06em; color:var(--parchment-dim); }
+  .ca-lion{ flex:0 1 auto; min-height:0; width:100%; margin-bottom:-4px; display:flex; align-items:center; justify-content:center; }
+  .ca-lion img{
+    max-width:100%; max-height:100%; width:auto; height:auto; display:block;
+    filter:drop-shadow(0 12px 18px rgba(0,0,0,.35));
+  }
+  .ca-name{ font-weight:900; font-size:30px; line-height:1.25; color:var(--gold); }
+  .ca-tagline{ font-size:13px; line-height:1.7; }
+  .ca-tags{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }
+  .ca-tags span{ font-size:11px; padding:3px 10px; border-radius:999px; background:var(--parchment); color:var(--bg-deep); font-weight:700; }
+  .ca-rarity{ font-size:12px; font-weight:700; color:var(--gold); }
+  .ca-foot{ margin-top:auto; padding-top:6px; font-size:10px; letter-spacing:.08em; color:var(--parchment-dim); }
+
+  #res-sparkle{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:5; }
+
+  /* ---------- 結果頁（寬螢幕版）：左＝角色卡片（不翻轉），右＝各區塊 ---------- */
+  .res-wide{ display:none; flex:1; min-height:0; }
+  .rw-stage{
+    flex:1 1 44%; min-width:0;
+    display:flex; align-items:center; justify-content:center; touch-action:none; perspective:1100px;
+  }
+  .rw-card{
+    position:relative; height:min(84dvh, 780px); aspect-ratio:5/8;
+    border-radius:22px; overflow:hidden; box-shadow:0 18px 40px rgba(0,0,0,.4);
+    transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:transform .25s ease-out;
+    animation:cardFloat 5s ease-in-out infinite;
+  }
+  .rw-card .ca-eyebrow{ font-size:13px; }
+  .rw-card .ca-name{ font-size:clamp(30px, 4.6vh, 42px); }
+  .rw-card .ca-tagline{ font-size:clamp(13px, 1.9vh, 16px); }
+  .rw-card .ca-tags span{ font-size:12px; }
+  .rw-card .ca-rarity{ font-size:13px; }
+  .rw-card .ca-foot{ font-size:11px; }
+  .rw-rel-thumb.empty::before{
+    content:''; display:block; height:100%; aspect-ratio:3/4; border-radius:14px; background:var(--stripes);
+  }
+
+  .rw-panel{
+    flex:1 1 56%; min-width:0; max-width:700px;
+    display:flex; flex-direction:column; justify-content:center; gap:14px;
+    padding:clamp(18px, 4vh, 44px) clamp(40px, 8vw, 140px) clamp(12px, 2vh, 24px) 0;
+    overflow-y:auto; scrollbar-width:thin;
+  }
+
+  .rw-block{ display:flex; gap:14px; padding:10px 0; }
+  .rw-block-title{
+    flex-shrink:0; writing-mode:vertical-rl; text-orientation:upright;
+    font-size:12px; letter-spacing:.14em; font-weight:700; color:var(--gold);
+    padding-right:12px; border-right:1px solid rgba(255,255,255,.14);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .rw-desc{ flex:1; min-width:0; margin:0; font-size:clamp(12px, 1.6vh, 13.5px); line-height:1.75; color:var(--parchment); }
+  .rw-stats{ flex:1; min-width:0; display:grid; grid-template-columns:1fr 1fr; gap:10px 22px; align-content:center; }
+  .rw-stat{ display:flex; align-items:center; gap:10px; min-width:0; font-size:13px; }
+  .rw-stat .lbl{ flex-shrink:0; min-width:4.2em; white-space:nowrap; }
+  .rw-stat-bar{ flex:1; min-width:0; height:9px; border-radius:6px; background:rgba(255,255,255,.12); overflow:hidden; }
+  .rw-stat-fill{
+    height:100%; width:0; border-radius:6px;
+    background:linear-gradient(90deg, #5be0ff, #7affc4); box-shadow:0 0 8px rgba(122,255,196,.7);
+    transition:width .9s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .rw-rels{ display:grid; grid-template-columns:1fr 1fr; }
+  .rw-rel{ padding:8px 14px; }
+  .rw-rel + .rw-rel{ border-left:1px solid rgba(255,255,255,.18); }   /* 共鳴 / 異頻 之間的分隔線 */
+  .rw-rel-label{ margin-bottom:10px; text-align:center; font-size:12px; letter-spacing:.12em; font-weight:700; color:var(--gold); }
+  .rw-rel-pair{ display:flex; justify-content:center; gap:10px; }
+  .rw-rel-item{ flex:1; min-width:0; text-align:center; transition:transform .3s ease; }
+  .rw-rel-item:hover{ transform:translateY(-6px); }
+  .rw-rel-thumb{ height:clamp(104px, 17vh, 170px); display:flex; align-items:center; justify-content:center; }
+  .rw-rel-thumb img{ max-width:100%; max-height:100%; width:auto; height:auto; display:block; }
+  .rw-rel-name{ margin-top:6px; font-size:12px; font-weight:700; color:var(--parchment); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .res-actions{
+    position:relative; z-index:6; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:12px;
+    padding:12px 22px calc(16px + env(safe-area-inset-bottom));
+  }
+  .res-actions--panel{ margin-top:22px; padding:0; }
+  .btn-ghost, .btn-share{
+    flex:0 0 auto; padding:7px 14px; border:1px solid #fff; border-radius:999px;
+    font-size:12px; font-weight:500; color:var(--parchment); background:transparent; cursor:pointer;
+    transition:transform .12s, color .25s ease, border-color .25s ease;
+  }
+  .btn-ghost:hover, .btn-share:hover{ color:var(--gold); border-color:var(--gold); }
+  .btn-ghost:active, .btn-share:active{ transform:scale(.96); }
+
+  /* ---------- 點亮魔法：滑動塗色，把花花獅輪廓點亮 ---------- */
+  #screen-magic{ background:radial-gradient(60% 45% at 50% 46%, rgba(91,224,255,.16), transparent 72%); }
+  .magic-inner{
+    flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:20px; padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+  }
+  .magic-title{
+    margin:0; text-align:center; font-weight:700; font-size:15px; line-height:1.6;
+    color:var(--gold); letter-spacing:.05em; transition:opacity .4s ease;
+  }
+  .magic-stage{
+    position:relative; aspect-ratio:var(--magic-ratio, 1);
+    width:min(86vw, calc(56dvh * var(--magic-ratio, 1)), calc(520px * var(--magic-ratio, 1)));
+    touch-action:none; transition:filter .8s ease;
+  }
+  .magic-stage canvas{ position:absolute; inset:0; width:100%; height:100%; }
+  .magic-stage.done{ filter:drop-shadow(0 0 26px rgba(122,255,196,.85)) brightness(1.12); }
+  .magic-meter{ width:min(60vw, 220px); height:4px; border-radius:4px; background:rgba(255,255,255,.14); overflow:hidden; }
+  .magic-meter-fill{
+    height:100%; width:0%; border-radius:4px;
+    background:linear-gradient(90deg, #5be0ff, #7affc4, var(--gold));
+    transition:width .25s ease;
+  }
+  .magic-skip{
+    background:none; border:none; cursor:pointer; padding:6px 12px;
+    font-size:12px; color:var(--parchment-dim); letter-spacing:.08em;
+    opacity:0; pointer-events:none; transition:opacity .6s ease;
+  }
+  .magic-skip.show{ opacity:.8; pointer-events:auto; }
+
+  /* ---------- 寬螢幕：左右分割（左＝插畫，右＝內容） ---------- */
+  @media (min-aspect-ratio:1/1){
+    :root{ --art-ratio:.72; --art-w:min(60vw, calc(100dvh * var(--art-ratio))); }  /* 比 9:16(.5625) 寬 → 插畫放大，下方沒圖案的部分會被裁掉；數字越大裁越多 */
+    .starfield{ display:block; }
+    .media-wrap{ right:auto; width:var(--art-w); }
+    .media-wrap img, .media-wrap video{ object-position:center top; }
+    .res-card-wrap, .res-actions--bar{ display:none; }
+    .res-wide{ display:flex; }
+    .start-overlay, .quiz-overlay{ left:var(--art-w); }
+    .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
+    .start-overlay{ justify-content:center; }
+    .quiz-overlay{ justify-content:center; }
+    .quiz-overlay > .progress-wrap{ margin-bottom:36px; }
+    .q-body{ flex:none; }
+  }
+
+  /* ---------- 寬螢幕（平板/桌面）：文字與按鈕放大一點 ---------- */
+  @media (min-width:768px){
+    h1.title{ font-size:34px; }
+    .lede-quote, .lede, .lede2{ font-size:15px; }
+    .btn-primary{ font-size:16px; padding:13px 44px; }
+    .q-text{ font-size:15px; }
+    .options{ gap:10px; }
+    .opt-btn{ font-size:14px; min-height:52px; }
+    .magic-title{ font-size:16px; }
+    .btn-ghost, .btn-share{ font-size:13px; padding:8px 20px; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .screen{ transition:none; }
+    .fleck, .rc-tilt, .rw-card{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="sparkleShape" d="M12 0 L14 10 L24 12 L14 14 L12 24 L10 14 L0 12 L10 10 Z"/>
+    <path id="waveShape" d="M0,6 Q4,0 8,6 T16,6 T24,6 T32,6 T40,6 T48,6 T56,6 T64,6 T72,6 T80,6 T88,6 T96,6 T104,6 T112,6 T120,6 T128,6 T136,6 T144,6 T152,6 T160,6 T168,6 T176,6 T184,6 T192,6 T200,6" fill="none"/>
+  </defs>
+</svg>
+
+<div class="app-shell">
+  <div class="starfield" id="starfield"></div>
+  <div class="screen-stack">
+
+    <!-- 起始畫面 -->
+    <section class="screen active" id="screen-start">
+      <div class="media-wrap" id="hero-media-wrap">
+        <div class="media-placeholder" id="hero-placeholder"></div>
+      </div>
+
+      <div class="start-overlay">
+        <div class="start-scrim"></div>
+        <svg class="start-spark sp1" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#ffffff"/></svg>
+        <svg class="start-spark sp2" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#ffffff"/></svg>
+
+        <div class="start-text">
+          <h1 class="title">
+            <div>魔法花花獅圖鑑</div>
+            <div class="line2">探索你魔法潛力</div>
+          </h1>
+          <div class="quote-block">
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="var(--title-teal)" stroke-width="1.5"/></svg>
+            <p class="lede-quote">真正的魔法獅 會在森林深處<br>找到屬於自己的魔法</p>
+            <svg class="wave-line" viewBox="0 0 200 12" preserveAspectRatio="none"><use href="#waveShape" stroke="var(--title-teal)" stroke-width="1.5"/></svg>
+          </div>
+          <p class="lede">你站在魔法森林的入口<br>一塊覆滿藤蔓的古老木牌上這麼寫著</p>
+          <p class="lede2">微風吹過，森林裡傳來奇妙的聲音</p>
+        </div>
+
+        <div class="start-cta">
+          <button class="btn-primary" id="btn-start">你的冒險 即將開始</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 測驗畫面 -->
+    <section class="screen" id="screen-quiz">
+      <div class="quiz-content" id="quiz-content">
+        <div class="media-wrap" id="quiz-media-wrap">
+          <div class="media-placeholder" id="quiz-placeholder"></div>
+        </div>
+        <div class="quiz-overlay">
+          <div class="quiz-scrim-top"></div>
+          <div class="quiz-scrim-bottom"></div>
+
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <button class="btn-back" id="btn-back" aria-label="上一題">
+                <svg viewBox="0 0 24 24"><path d="M15 5 L8 12 L15 19" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span><b id="q-index">1</b> / <span id="q-total"></span></span>
+            </div>
+            <div class="progress-line-wrap" id="progress-track"></div>
+          </div>
+          <div class="q-body">
+            <div class="q-text" id="q-text"></div>
+          </div>
+          <div class="options" id="q-options"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 點亮魔法：Q8 之後的小互動 -->
+    <section class="screen" id="screen-magic">
+      <div class="magic-inner">
+        <p class="magic-title" id="magic-title">用手指在花花獅上滑動<br>點亮牠的魔法</p>
+        <div class="magic-stage" id="magic-stage">
+          <canvas id="magic-paint"></canvas>
+          <canvas id="magic-line"></canvas>
+        </div>
+        <div class="magic-meter"><div class="magic-meter-fill" id="magic-meter-fill"></div></div>
+        <button class="magic-skip" id="magic-skip">直接揭曉</button>
+      </div>
+    </section>
+
+    <!-- 結果畫面 -->
+    <section class="screen" id="screen-result">
+      <!-- 手機：可翻轉的結果卡片 -->
+      <div class="res-card-wrap" id="res-card-wrap">
+        <div class="rc-tilt" id="rc-tilt">
+          <div class="rc-card" id="rc-card">
+            <div class="rc-face rc-front empty" id="rc-front"></div>
+            <div class="rc-face rc-back" id="rc-back">
+              <div class="card-art" id="rc-back-art"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 電腦/橫向平板：全螢幕，依區塊排版 -->
+      <div class="res-wide">
+        <div class="rw-stage" id="rw-stage">
+          <div class="rw-card" id="rw-card">
+            <div class="card-art" id="rw-card-art"></div>
+          </div>
+        </div>
+        <div class="rw-panel">
+          <div class="rw-block">
+            <div class="rw-block-title">觀察筆記</div>
+            <p class="rw-desc" id="rw-desc"></p>
+          </div>
+          <div class="rw-block">
+            <div class="rw-block-title">魔法能量</div>
+            <div class="rw-stats" id="rw-stats"></div>
+          </div>
+          <div class="rw-rels">
+            <div class="rw-rel">
+              <div class="rw-rel-label">與你共鳴的魔法獅</div>
+              <div class="rw-rel-pair" id="rw-attract"></div>
+            </div>
+            <div class="rw-rel">
+              <div class="rw-rel-label">與你異頻的魔法獅</div>
+              <div class="rw-rel-pair" id="rw-clash"></div>
+            </div>
+          </div>
+          <div class="res-actions res-actions--panel">
+            <button class="btn-ghost js-restart">再測一次</button>
+            <button class="btn-share js-save">領取魔法獅檔案</button>
+          </div>
+        </div>
+      </div>
+
+      <canvas id="res-sparkle"></canvas>
+      <div class="res-actions res-actions--bar">
+        <button class="btn-ghost js-flip">翻轉卡片</button>
+        <button class="btn-ghost js-restart">再測一次</button>
+        <button class="btn-share js-save">領取魔法獅檔案</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- 首頁背景：依序嘗試 mp4 → gif/webp/jpg/jpeg/png，載入第一個存在的檔案 ---------------- */
+  var IMG_EXTS = ['gif', 'webp', 'jpg', 'jpeg', 'png'];
+
+  function buildMediaCandidates(basePath){
+    var list = [{type:'video', src: basePath + '.mp4'}];
+    IMG_EXTS.forEach(function(ext){ list.push({type:'image', src: basePath + '.' + ext}); });
+    return list;
+  }
+
+  function loadFirstMedia(candidates, onReady){
+    var i = 0;
+    (function tryNext(){
+      if(i >= candidates.length) return;
+      var c = candidates[i++];
+      if(c.type === 'video'){
+        var v = document.createElement('video');
+        v.muted = true; v.playsInline = true; v.loop = true; v.autoplay = true;
+        v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+        v.setAttribute('webkit-playsinline', '');
+        v.addEventListener('loadeddata', function(){
+          onReady(v);
+          v.play().catch(function(){});
+        });
+        v.addEventListener('error', tryNext);
+        v.src = c.src;
+        v.load();
+      } else {
+        var img = new Image();
+        img.addEventListener('load', function(){ onReady(img); });
+        img.addEventListener('error', tryNext);
+        img.src = c.src;
+      }
+    })();
+  }
+
+  /* 把載入好的背景放進容器，並移除斜紋佔位 */
+  function mountMedia(wrap, placeholder, media){
+    if(placeholder.parentNode) placeholder.remove();
+    wrap.insertBefore(media, wrap.firstChild);
+  }
+
+  /* ---------------- 漂浮星空（寬螢幕右側的背景，純裝飾） ---------------- */
+  (function initStarfield(){
+    var box = document.getElementById('starfield');
+    for(var i = 0; i < 28; i++){
+      var f = document.createElement('i');
+      f.className = 'fleck';
+      f.style.setProperty('--x', (Math.random() * 100) + '%');
+      f.style.setProperty('--s', (2 + Math.random() * 3) + 'px');
+      f.style.setProperty('--d', (14 + Math.random() * 16) + 's');
+      f.style.setProperty('--dl', (-Math.random() * 20) + 's');
+      f.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+      box.appendChild(f);
+    }
+  })();
+
+  /* ---------------- 起始頁 Hero 圖片/影片載入 ---------------- */
+  (function initHeroMedia(){
+    var wrap = document.getElementById('hero-media-wrap');
+    var placeholder = document.getElementById('hero-placeholder');
+    loadFirstMedia(buildMediaCandidates('img/hero'), function(media){
+      media.alt = '魔法森林入口';
+      mountMedia(wrap, placeholder, media);
+    });
+  })();
+
+  /* ---------------- 資料設定：新版 4 軸 8 屬性計分系統 ---------------- */
+  /* 充電方式：light 光芒 / moon 月光　行動模式：burst 爆發 / sustain 蓄力
+     思考方式：fantasy 幻想 / analysis 分析　人生態度：explore 探索 / guardian 守護 */
+
+  var QUESTIONS = [
+    { q:'你走進魔法森林的入口<br>來到一片美麗的花田<br>小花們隱約的發出細小的聲音 你會：',
+      opts:[ {t:'靜靜聽它發出的聲音，它在和我說話嗎', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'靠近花朵，看看它有什麼反應', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'蹲下來仔細看，研究這是什麼花', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'幫花稍微擋個風，怕它被吹壞了', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'逗留一會後 你離開了花田<br>一群散發著柔和光芒的螢光蝴蝶迎面飛來<br>似乎正在邀請你跟上 你會：',
+      opts:[ {t:'追著最亮的蝴蝶，它一定知道特別的地方', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'靜靜看著蝴蝶飛舞，欣賞這奇妙的景象', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'慢慢湊過去看，試著讓蝴蝶停在手上', attrs:[{attr:'light', pts:2}, {attr:'fantasy', pts:1}]}, {t:'放慢腳步跟牠們保持著一段距離不打擾他們', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'螢光蝴蝶消失在一片白色迷霧之中<br>霧裡的樹影若隱若現<br>看不清楚前方的路 你會：',
+      opts:[ {t:'憑著直覺前進，濃霧總會有盡頭的吧', attrs:[{attr:'fantasy', pts:2}, {attr:'explore', pts:1}]}, {t:'等待霧氣慢慢散開，再決定下一步', attrs:[{attr:'sustain', pts:2}, {attr:'moon', pts:1}]}, {t:'先停在原地，仔細觀察周圍的環境', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'呼喊一聲看看周遭是否有人回應', attrs:[{attr:'light', pts:2}, {attr:'explore', pts:1}]} ] },
+    { q:'穿過迷霧 眼前是一條看似非常古老的吊橋<br>你不知道這座橋是否安全<br>但似乎只有通過它 才能抵達森林另一端 你會：',
+      opts:[ {t:'先仔細查看橋上的狀況，確認後再慢慢通過', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]}, {t:'停下腳步等自己準備好，再踏上吊橋', attrs:[{attr:'moon', pts:2}, {attr:'explore', pts:1}]}, {t:'不管了，閉著眼睛直接衝過去！', attrs:[{attr:'burst', pts:2}, {attr:'light', pts:1}]}, {t:'綁緊橋邊的繩索，讓橋更安全', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'通過吊橋後你來到森林深處<br>一隻迷路的小麋鹿坐在路旁<br>他說自己在找回家的方向 你會：',
+      opts:[ {t:'陪他聊一聊，也許能找到幫助他的方法', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'讓小鹿跟著你走，探索可能錯過的地方', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'查看附近痕跡，試著推測牠原本來自的方向', attrs:[{attr:'analysis', pts:2}, {attr:'explore', pts:1}]}, {t:'陪牠在樹下休息一會，再慢慢想辦法', attrs:[{attr:'moon', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'我們決定往森林深處探索 一棵大樹佇立在前方<br>感受到你們的到來 大樹緩緩睜開眼 問道<br>「旅行者，你想知道什麼呢？」你會：',
+      opts:[ {t:'想知道小麋鹿回家的方向', attrs:[{attr:'analysis', pts:2}, {attr:'guardian', pts:1}]}, {t:'想知道森林各處，有怎麼樣的景色', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'您在這裡長這麼大，平時會覺得孤單嗎', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'這座森林是不是有什麼秘密', attrs:[{attr:'fantasy', pts:2}, {attr:'moon', pts:1}]} ] },
+    { q:'在大樹的指引下 你和小麋鹿繼續往前走<br>眼前出現一座寧靜的湖泊<br>湖的另一側正是小麋鹿的家！ 你會：',
+      opts:[ {t:'靜靜望著湖面，多麼漂亮的景色啊', attrs:[{attr:'moon', pts:2}, {attr:'fantasy', pts:1}]}, {t:'看到開心的小麋鹿，心情也跟著好起來', attrs:[{attr:'guardian', pts:2}, {attr:'sustain', pts:1}]}, {t:'既然麋鹿回家了，我也要繼續踏上旅程了', attrs:[{attr:'explore', pts:2}, {attr:'burst', pts:1}]}, {t:'太好了，牠的家人應該擔心壞了吧', attrs:[{attr:'analysis', pts:2}, {attr:'sustain', pts:1}]} ] },
+    { q:'「謝謝你陪我走這麼遠。」<br>小麋鹿開心地回頭向你道謝<br>「希望這份禮物能陪你繼續旅行。」你會選擇：',
+      opts:[ {t:'一顆在暗處能散發淡淡光芒的河床石頭', attrs:[{attr:'light', pts:2}, {attr:'guardian', pts:1}]}, {t:'一枝能寫下冒險故事的樹枝筆', attrs:[{attr:'light', pts:2}, {attr:'analysis', pts:1}]}, {t:'一片會輕微晃動指路的三葉草', attrs:[{attr:'burst', pts:2}, {attr:'explore', pts:1}]}, {t:'一朵隨著心情改變顏色的神奇小花', attrs:[{attr:'fantasy', pts:2}, {attr:'light', pts:1}]} ] } ];
+
+  var LIONS = {
+    'moon-sustain-fantasy-explore':{
+      name:'占星術獅', tagline:['觀察星星與命運','預測今天晚餐吃什麼'],
+      desc:'你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情。別人眼中的平凡日常，在你眼裡總藏著另一層意義。你相信每顆星星、每場相遇，都藏著某種訊息。即使沒有人能解釋原因，你仍願意追尋那些只有自己看得見的奇妙連結。',
+      tags:['浪漫觀測家','靈感收藏家'],
+      stats:{social:3, action:3, imagination:10, adventure:8}, rarity:5,
+      attract:['彩虹調色獅','時光魔法獅'], clash:['森林回音獅','雷光疾行獅']
+    },
+    'moon-sustain-analysis-guardian':{
+      name:'落葉收藏獅', tagline:['喜歡收集森林落葉','感知到每片葉片的故事'],
+      desc:'你總能在森林裡找到別人忽略的寶物。你記得別人隨口說過的小事，也總能感受到那些微小卻重要的情緒變化。你重情感、珍惜回憶，也珍惜人與人之間細微卻真實的連結。',
+      tags:['回憶收藏家','心思細膩'],
+      stats:{social:4, action:3, imagination:5, adventure:3}, rarity:60,
+      attract:['蘑菇治療獅','軟綿綿棉花獅'], clash:['煙火魔法獅','雷光疾行獅']
+    },
+    'light-sustain-analysis-guardian':{
+      name:'蘑菇治療獅', tagline:['從百種蘑菇製作解方','需要幫助的人都會找你'],
+      desc:'你喜歡在森林角落研究各種蘑菇，總能第一時間發現身邊人的小小需要。比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。你不一定是最會表達關心的人，卻總能記得那些容易被忽略的小事。你習慣用行動告訴別人：「我有注意到你。」',
+      tags:['溫柔藥劑師','可靠夥伴'],
+      stats:{social:3, action:4, imagination:4, adventure:5}, rarity:80,
+      attract:['落葉收藏獅','獨角獸溝通獅'], clash:['彩虹調色獅','煙火魔法獅']
+    },
+    'light-burst-fantasy-guardian':{
+      name:'光芒四射獅', tagline:['走到哪裡都自帶光芒','現場氣氛的開關'],
+      desc:'你總是在森林需要力量的時候出現，你帶來笑聲和勇氣。你習慣成為那個「沒問題，我們一起想辦法」的人，並相信快樂和希望可以傳遞，因此總努力把自己的光分享出去。只是有時候太習慣照亮別人，忘了自己也需要被照顧。',
+      tags:['主角光環','氣氛製造機'],
+      stats:{social:10, action:8, imagination:7, adventure:4}, rarity:20,
+      attract:['獨角獸溝通獅','煙火魔法獅'], clash:['軟綿綿棉花獅','時光魔法獅']
+    },
+    'light-sustain-fantasy-guardian':{
+      name:'獨角獸溝通獅', tagline:['從蝸牛到獨角獸都認識','一路聊天聊到天黑'],
+      desc:'你是一個善於理解他人的人，喜歡傾聽不同的故事，也總能發現那些藏在沉默裡的小心思。你相信沒有人是真的奇怪，只是還沒有遇見懂自己語言的人。因此，你總是不知不覺成為大家靠近彼此的橋樑。',
+      tags:['朋友製造機','森林外交官'],
+      stats:{social:9, action:3, imagination:8, adventure:5}, rarity:25,
+      attract:['光芒四射獅','蘑菇治療獅'], clash:['雷光疾行獅','占星術獅']
+    },
+    'moon-burst-fantasy-explore':{
+      name:'彩虹調色獅', tagline:['隨身攜帶彩虹色票','隨著心情揮灑顏色'],
+      desc:'你總是帶著一本彩虹色票到處旅行，替世界補上缺少的顏色。你習慣用不同角度看待眼前的一切，從一片落葉、一場雨，到一個不起眼的小角落，都能發現新的靈感。你的世界沒有固定答案，每一天都可能變成一幅全新的作品。',
+      tags:['創意爆發','藝術家靈魂'],
+      stats:{social:5, action:8, imagination:10, adventure:10}, rarity:20,
+      attract:['占星術獅','煙火魔法獅'], clash:['落葉收藏獅','蘑菇治療獅']
+    },
+    'light-sustain-fantasy-explore':{
+      name:'露珠安眠獅', tagline:['收集森林清晨的露珠','滴答聲藏著安眠魔法'],
+      desc:'你總是背著露珠瓶穿梭在森林裡，收集清晨留下的小小聲音。你不急著追上別人的腳步，更喜歡慢慢感受一個地方、一段時間、一份心情。你習慣放慢腳步感受世界，相信世界上最珍貴的發現，往往藏在那些願意慢下腳步的人眼前。',
+      tags:['夢境收藏家','療癒系'],
+      stats:{social:6, action:2, imagination:8, adventure:4}, rarity:60,
+      attract:['占星術獅','軟綿綿棉花獅'], clash:['雷光疾行獅','煙火魔法獅']
+    },
+    'light-burst-fantasy-explore':{
+      name:'煙火魔法獅', tagline:['見義勇為但脾氣暴躁','激動的時候會炸出小火花'],
+      desc:'你總是在森林遇到危機時第一個衝出去。你的情緒像煙火一樣直接，開心或生氣都藏不住。看到值得努力的事，你很難袖手旁觀。你的熱情來得快，也燒得亮，只要相信一件事值得做，就很難停下來。',
+      tags:['熱血行動派','正義感爆棚'],
+      stats:{social:9, action:10, imagination:8, adventure:5}, rarity:15,
+      attract:['光芒四射獅','雷光疾行獅'], clash:['落葉收藏獅','露珠安眠獅']
+    },
+    'moon-sustain-fantasy-guardian':{
+      name:'軟綿綿棉花獅', tagline:['全身像棉花糖一樣軟','受到攻擊時不會受到攻擊'],
+      desc:'你的身體像棉花糖一樣柔軟，總能讓靠近你的人感到安心。你不喜歡爭輸贏，也不急著證明自己才是正確的那個人。你更在意的是：「我們能不能好好理解彼此？」別人以為你的溫柔來自天性，但其實那是一種經過練習的勇敢。',
+      tags:['抱起來很舒服','柔軟力量'],
+      stats:{social:4, action:2, imagination:6, adventure:3}, rarity:8,
+      attract:['落葉收藏獅','露珠安眠獅'], clash:['光芒四射獅','雷光疾行獅']
+    },
+    'moon-burst-analysis-explore':{
+      name:'時光魔法獅', tagline:['穿梭昨天與明天','最常用來找弄丟的東西'],
+      desc:'你常常在森林裡尋找消失的時間碎片，有時是為了找回遺忘的小事，有時只是想知道某個瞬間為什麼如此重要。你習慣先觀察、整理，再做出決定。對你而言，過去不是結束的故事，而是理解現在、找到下一步的重要線索。',
+      tags:['昨天放哪了','等等我想一下'],
+      stats:{social:3, action:5, imagination:4, adventure:7}, rarity:75,
+      attract:['蘑菇治療獅','占星術獅'], clash:['煙火魔法獅','光芒四射獅']
+    },
+    'light-burst-analysis-explore':{
+      name:'雷光疾行獅', tagline:['耐心流失速度和閃電一樣快','森林裡沒人追得上'],
+      desc:'你的腦袋和腳步總是同步加速，想到什麼就立刻開始行動，等待對你來說是世界上最困難的事情。你擅長快速看出事情的重點，並立刻找到最有效率的路線。當大家還在討論要不要出發時，你通常已經完成一半任務了。',
+      tags:['三秒就出發','快到有殘影'],
+      stats:{social:10, action:9, imagination:3, adventure:8}, rarity:15,
+      attract:['煙火魔法獅','光芒四射獅'], clash:['露珠安眠獅','軟綿綿棉花獅']
+    },
+    'light-burst-analysis-guardian':{
+      name:'森林回音獅', tagline:['自帶喇叭的說話音量','顯得特別有道理'],
+      desc:'你說的每一句話，都會在森林裡迴盪很久。即使只是分享今天午餐吃了什麼，也會聽起來像一場重要宣言。你相信想法能帶來改變，也願意為心中的信念勇敢發聲。當身邊有人不敢說出口時，你總會成為那個站出來替大家傳遞心聲的人。',
+      tags:['自帶擴音器','很有道理的樣子'],
+      stats:{social:10, action:8, imagination:4, adventure:2}, rarity:25,
+      attract:['光芒四射獅','獨角獸溝通獅'], clash:['占星術獅','軟綿綿棉花獅']
+    }
+  };
+
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* ---------------- 狀態 ---------------- */
+  var idx = 0;
+  var scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+  var answers = [];
+  var currentResult = null;
+
+  /* ---------------- DOM ---------------- */
+  var screens = {
+    start: document.getElementById('screen-start'),
+    quiz: document.getElementById('screen-quiz'),
+    magic: document.getElementById('screen-magic'),
+    result: document.getElementById('screen-result')
+  };
+  var shell = document.querySelector('.app-shell');
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
+    shell.classList.toggle('on-result', name === 'result');
+  }
+
+  /* ---------------- 直線＋星星進度條 ---------------- */
+  var progressTrack = document.getElementById('progress-track');
+  function renderProgress(){
+    var n = QUESTIONS.length;
+    var fillPct = n > 1 ? (idx/(n-1))*96 : 0;
+    var html = '<div class="progress-line-bg"></div>';
+    html += '<div class="progress-line-fill" style="width:'+fillPct+'%"></div>';
+    for(var i=0;i<n;i++){
+      var cls = i < idx ? 'done' : (i===idx ? 'now' : 'todo');
+      var pct = n > 1 ? 2 + (i/(n-1))*96 : 50;
+      html += '<svg class="progress-star '+cls+'" style="left:'+pct+'%" viewBox="0 0 24 24">'+
+        '<use href="#sparkleShape" fill="var(--gold)"/></svg>';
+    }
+    progressTrack.innerHTML = html;
+    document.getElementById('q-index').textContent = Math.min(idx+1, n);
+    document.getElementById('q-total').textContent = n;
+  }
+
+  /* ---------------- 每題全螢幕背景圖（固定用 jpg，不需要影片/動圖） ---------------- */
+  var quizMediaWrap = document.getElementById('quiz-media-wrap');
+  var quizPlaceholder = document.getElementById('quiz-placeholder');
+  function loadQuestionMedia(qNum){
+    quizMediaWrap.innerHTML = '';
+    quizMediaWrap.appendChild(quizPlaceholder);
+    var img = new Image();
+    img.addEventListener('load', function(){
+      img.alt = '第 ' + qNum + ' 題場景';
+      mountMedia(quizMediaWrap, quizPlaceholder, img);
+    });
+    img.src = 'img/q' + qNum + '.jpg';
+  }
+
+  /* ---------------- 渲染題目 ---------------- */
+  var qText = document.getElementById('q-text');
+  var qOptions = document.getElementById('q-options');
+  var OPTION_STAR_ICON = '<svg viewBox="0 0 24 24"><use href="#sparkleShape" fill="var(--gold)"/></svg>';
+
+  var isTransitioning = false;
+
+  function renderQuestion(){
+    var item = QUESTIONS[idx];
+    if(!item) return; /* 防呆：idx 不小心超出範圍時，安靜地不做任何事，不要整頁壞掉 */
+    renderProgress();
+    loadQuestionMedia(idx+1);
+    qText.innerHTML = item.q;
+    qOptions.innerHTML = '';
+    item.opts.forEach(function(o){
+      var btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerHTML = '<span class="opt-glyph">'+OPTION_STAR_ICON+'</span><span>'+o.t+'</span>';
+      btn.addEventListener('click', function(){ pick(o.attrs); });
+      qOptions.appendChild(btn);
+    });
+  }
+
+  function transitionToQuestion(){
+    isTransitioning = true;
+    var content = document.getElementById('quiz-content');
+    content.classList.add('fading');
+    setTimeout(function(){
+      renderQuestion();
+      requestAnimationFrame(function(){
+        content.classList.remove('fading');
+        isTransitioning = false;
+      });
+    }, 220);
+  }
+
+  function pick(attrs){
+    if(isTransitioning) return; /* 淡出動畫還沒跑完時，不理會重複點擊，避免計分/題目錯亂 */
+    var prev = answers[idx];
+    if(prev){ prev.forEach(function(a){ scores[a.attr] -= a.pts; }); }
+    attrs.forEach(function(a){ scores[a.attr] += a.pts; });
+    answers[idx] = attrs;
+    idx++;
+    if(idx >= QUESTIONS.length){
+      startMagic();
+      return;
+    }
+    transitionToQuestion();
+  }
+
+  function goBack(){
+    if(isTransitioning) return;
+    if(idx <= 0){
+      showScreen('start');
+      return;
+    }
+    idx--;
+    transitionToQuestion();
+  }
+
+  /* ---------------- 點亮魔法：Q8 之後，滑動塗色點亮花花獅輪廓，再進入結果頁 ---------------- */
+  function finishQuiz(){
+    computeResult();
+    showScreen('result');
+  }
+
+  var magicStage = document.getElementById('magic-stage');
+  var paintCv = document.getElementById('magic-paint');
+  var lineCv = document.getElementById('magic-line');
+  var magicTitle = document.getElementById('magic-title');
+  var magicFill = document.getElementById('magic-meter-fill');
+  var magicSkip = document.getElementById('magic-skip');
+  var MAGIC_DONE_AT = 0.8;      /* 點亮到 80% 就算完成 */
+  var magic = null;             /* 目前這一輪的狀態 */
+  var magicTimers = [];
+  var magicImg = null;          /* img/magic-lion.png（去背的魔法獅角色），載入成功才會有 */
+  var magicFallback = null;     /* 沒放角色圖時，改用程式畫的簡易獅頭 */
+
+  (function preloadMagicLion(){
+    var img = new Image();
+    img.addEventListener('load', function(){ magicImg = img; });
+    img.src = 'img/magic-lion.png';
+  })();
+
+  /* 備援：沒有 magic-lion.png 時，程式自己畫一隻獅頭（顏色比照角色：橘鬃毛、奶黃臉、粉頰） */
+  function makeFallbackLion(){
+    var cv = document.createElement('canvas'); cv.width = cv.height = 600;
+    var x = cv.getContext('2d'), cx = 300, cy = 320, R = 200;
+    function disc(px, py, r, fill){ x.fillStyle = fill; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill(); }
+    [-1, 1].forEach(function(side){
+      var a = -Math.PI / 2 + side * 0.74, ex = cx + Math.cos(a) * R * 0.98, ey = cy + Math.sin(a) * R * 0.98;
+      disc(ex, ey, R * 0.3, '#c76a3a'); disc(ex, ey, R * 0.15, '#f0a58f');
+    });
+    x.fillStyle = '#c76a3a'; x.beginPath();
+    for(var i = 0; i <= 180; i++){
+      var th = (i / 180) * Math.PI * 2, r = R * (0.9 + 0.1 * Math.abs(Math.sin(7 * th)));
+      var px = cx + Math.cos(th) * r, py = cy + Math.sin(th) * r;
+      if(i === 0) x.moveTo(px, py); else x.lineTo(px, py);
+    }
+    x.fill();
+    disc(cx, cy + R * 0.04, R * 0.62, '#fdf3a6');
+    [-1, 1].forEach(function(side){
+      disc(cx + side * R * 0.4, cy + R * 0.14, R * 0.12, '#eba096');
+      disc(cx + side * R * 0.22, cy - R * 0.06, R * 0.05, '#12303f');
+    });
+    x.fillStyle = '#12303f'; x.beginPath();
+    x.moveTo(cx - R * 0.07, cy + R * 0.12); x.lineTo(cx + R * 0.07, cy + R * 0.12); x.lineTo(cx, cy + R * 0.2); x.fill();
+    return cv;
+  }
+
+  /* 依角色圖的透明區域，準備：暗色剪影、金色外框、可塗色的格點。完全不需要另外畫輪廓 */
+  function setupMagic(){
+    var src = magicImg || (magicFallback = magicFallback || makeFallbackLion());
+    var ratio = src.width / src.height;
+    magicStage.style.setProperty('--magic-ratio', ratio);
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var cw = Math.round(magicStage.clientWidth * dpr), ch = Math.round(magicStage.clientHeight * dpr);
+    if(!cw || !ch) return;
+    paintCv.width = lineCv.width = cw; paintCv.height = lineCv.height = ch;
+
+    function layer(){ var l = document.createElement('canvas'); l.width = cw; l.height = ch; return l; }
+    function tinted(base, color){
+      var l = layer(), t = l.getContext('2d');
+      t.drawImage(base, 0, 0); t.globalCompositeOperation = 'source-in';
+      t.fillStyle = color; t.fillRect(0, 0, cw, ch);
+      return l;
+    }
+    var m = Math.min(cw, ch) * 0.05, k = Math.min((cw - 2 * m) / src.width, (ch - 2 * m) / src.height);
+    var colorCv = layer(), cc = colorCv.getContext('2d');
+    cc.drawImage(src, (cw - src.width * k) / 2, (ch - src.height * k) / 2, src.width * k, src.height * k);
+
+    /* 金色外框：把金色剪影往 12 個方向各偏一點點疊出外圈，再挖掉角色本體 */
+    var gold = tinted(colorCv, '#f5e7a6'), ring = layer(), rc = ring.getContext('2d'), off = 3 * dpr;
+    for(var a = 0; a < 12; a++){ rc.drawImage(gold, Math.cos(a * Math.PI / 6) * off, Math.sin(a * Math.PI / 6) * off); }
+    rc.globalCompositeOperation = 'destination-out'; rc.drawImage(colorCv, 0, 0);
+    var lc = lineCv.getContext('2d');
+    lc.shadowColor = 'rgba(245,231,166,.8)'; lc.shadowBlur = 12 * dpr; lc.drawImage(ring, 0, 0);
+
+    var pc = paintCv.getContext('2d');
+    pc.drawImage(tinted(colorCv, 'rgba(8,28,40,.6)'), 0, 0);
+
+    /* 可塗色的格點：角色不透明的地方。
+       直接雙擊 html（file://）開啟時，瀏覽器會禁止讀取圖片像素，這時改用「角色範圍內的橢圓」估算，功能照樣能玩；
+       放上伺服器（GitHub Pages 等）就會用角色真正的外形。 */
+    var step = Math.round(Math.max(cw, ch) * 0.035), pts = [], data = null;
+    try{ data = cc.getImageData(0, 0, cw, ch).data; }catch(err){ data = null; }
+    var rx = src.width * k * 0.46, ry = src.height * k * 0.46;
+    for(var y = 0; y < ch; y += step){
+      for(var x = 0; x < cw; x += step){
+        var on = data ? data[(y * cw + x) * 4 + 3] > 100
+                      : Math.pow((x - cw / 2) / rx, 2) + Math.pow((y - ch / 2) / ry, 2) <= 1;
+        if(on) pts.push({ x: x, y: y, hit: false });
+      }
+    }
+    magic = { cw: cw, ch: ch, brush: Math.max(cw, ch) * 0.085, colorCv: colorCv, pc: pc, pts: pts,
+              hitCount: 0, hue: 170, drawing: false, lx: 0, ly: 0, done: false };
+    magicFill.style.width = '0%';
+  }
+
+  /* 一個筆刷點：圓形範圍內顯示角色原本的顏色，外加一圈會慢慢變色的魔法光暈 */
+  function magicStamp(x, y){
+    var m = magic, pc = m.pc, b = m.brush;
+    pc.save(); pc.beginPath(); pc.arc(x, y, b, 0, Math.PI * 2); pc.clip(); pc.drawImage(m.colorCv, 0, 0); pc.restore();
+    var g = pc.createRadialGradient(x, y, 0, x, y, b * 1.5);
+    g.addColorStop(0, 'hsla(' + m.hue + ',90%,66%,.2)'); g.addColorStop(1, 'hsla(' + m.hue + ',90%,66%,0)');
+    pc.save(); pc.globalCompositeOperation = 'source-atop'; pc.fillStyle = g;
+    pc.beginPath(); pc.arc(x, y, b * 1.5, 0, Math.PI * 2); pc.fill(); pc.restore();
+  }
+
+  function magicPaintSeg(x0, y0, x1, y1){
+    var m = magic, len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(len / (m.brush * 0.35)));
+    m.hue = (m.hue + len * 0.2) % 360;                /* 滑動越多，光暈顏色變越多 */
+    for(var i = 0; i <= n; i++){ magicStamp(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n); }
+
+    var reach = m.brush * 0.9, vx = x1 - x0, vy = y1 - y0, vv = vx * vx + vy * vy;
+    m.pts.forEach(function(p){
+      if(p.hit) return;
+      var t = vv ? Math.max(0, Math.min(1, ((p.x - x0) * vx + (p.y - y0) * vy) / vv)) : 0;
+      if(Math.hypot(p.x - (x0 + vx * t), p.y - (y0 + vy * t)) <= reach){ p.hit = true; m.hitCount++; }
+    });
+    var progress = m.hitCount / m.pts.length;
+    magicFill.style.width = Math.min(100, progress / MAGIC_DONE_AT * 100) + '%';
+    if(progress >= MAGIC_DONE_AT) completeMagic();
+  }
+
+  function completeMagic(){
+    var m = magic;
+    if(!m || m.done) return;
+    m.done = true;
+    magicTimers.forEach(clearTimeout); magicTimers = [];
+    m.pc.clearRect(0, 0, m.cw, m.ch);
+    m.pc.drawImage(m.colorCv, 0, 0);                  /* 一次補滿，角色完整亮起（光暈色塊也一起還原成原本顏色） */
+    magicFill.style.width = '100%';
+    magicStage.classList.add('done');
+    magicTitle.innerHTML = '魔法被點亮了！';
+    magicSkip.classList.remove('show');
+    magicTimers.push(setTimeout(finishQuiz, 1400));
+  }
+
+  function startMagic(){
+    magicTimers.forEach(clearTimeout); magicTimers = [];
+    magicStage.classList.remove('done');
+    magicSkip.classList.remove('show');
+    magicTitle.innerHTML = '用手指在花花獅上滑動<br>點亮牠的魔法';
+    showScreen('magic');
+    magic = null;
+    setupMagic();
+    /* 萬一畫布沒準備好（magic 是 null），「直接揭曉」馬上出現，避免使用者卡住 */
+    magicTimers.push(setTimeout(function(){ magicSkip.classList.add('show'); }, magic ? 6000 : 0));
+  }
+
+  function magicXY(e){
+    var r = lineCv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (magic.cw / r.width), y: (e.clientY - r.top) * (magic.ch / r.height) };
+  }
+  lineCv.addEventListener('pointerdown', function(e){
+    if(!magic || magic.done) return;
+    var p = magicXY(e);
+    magic.drawing = true; magic.lx = p.x; magic.ly = p.y;
+    lineCv.setPointerCapture(e.pointerId);
+    magicPaintSeg(p.x, p.y, p.x, p.y);
+  });
+  lineCv.addEventListener('pointermove', function(e){
+    if(!magic || !magic.drawing || magic.done) return;
+    var p = magicXY(e);
+    magicPaintSeg(magic.lx, magic.ly, p.x, p.y);
+    magic.lx = p.x; magic.ly = p.y;
+  });
+  ['pointerup', 'pointercancel'].forEach(function(t){
+    lineCv.addEventListener(t, function(){ if(magic) magic.drawing = false; });
+  });
+  magicSkip.addEventListener('click', function(){ if(magic) completeMagic(); else finishQuiz(); });
+  window.addEventListener('resize', function(){
+    if(screens.magic.classList.contains('active') && magic && !magic.done) setupMagic();
+  });
+
+  /* ---------------- 結果計算：換算成4維人格座標，取距離最近的魔法獅 ---------------- */
+  function axisScore(a, b){
+    /* a、b 兩側分數換算成 0～10 座標；兩側都是 0 分時（使用者完全沒碰到這個維度）視為中性值 5 */
+    var total = scores[a] + scores[b];
+    return total > 0 ? (scores[a] / total) * 10 : 5;
+  }
+
+  function computeResult(){
+    var coord = {
+      social:      axisScore('light', 'moon'),
+      action:      axisScore('burst', 'sustain'),
+      imagination: axisScore('fantasy', 'analysis'),
+      adventure:   axisScore('explore', 'guardian')
+    };
+
+    var bestKey = null, bestDist = Infinity;
+    Object.keys(LIONS).forEach(function(k){
+      var s = LIONS[k].stats;
+      var d = Math.sqrt(
+        Math.pow(coord.social - s.social, 2) +
+        Math.pow(coord.action - s.action, 2) +
+        Math.pow(coord.imagination - s.imagination, 2) +
+        Math.pow(coord.adventure - s.adventure, 2)
+      );
+      if(d < bestDist){ bestDist = d; bestKey = k; }
+    });
+
+    currentResult = { key:bestKey, lion:LIONS[bestKey] };
+    renderResult();
+  }
+
+  var STAT_LABELS = { social:'社交能量', action:'行動速度', imagination:'想像力', adventure:'冒險精神' };
+  var NAME_TO_KEY = {};
+  Object.keys(LIONS).forEach(function(k){ NAME_TO_KEY[LIONS[k].name] = k; });
+
+  /* 依序嘗試網址清單，找到第一張存在的圖就回傳載入好的 <img>；全部都沒有就回傳 null */
+  function findImage(urls, done){
+    var i = 0;
+    (function next(){
+      if(i >= urls.length){ done(null); return; }
+      var img = new Image();
+      img.addEventListener('load', function(){ done(img); });
+      img.addEventListener('error', next);
+      img.src = urls[i++];
+    })();
+  }
+
+  /* 角色去背圖（寬螢幕版的主角與共鳴/異頻縮圖用）：lion-{key}.png / .webp / .gif，或 result-{key}.png。
+     載入成功才放進去，沒有就維持斜紋佔位 */
+  function loadLionPng(box, key, name){
+    box.innerHTML = '';
+    box.classList.add('empty');
+    var urls = ['png', 'webp', 'gif'].map(function(e){ return 'img/lion-' + key + '.' + e; });
+    urls.push('img/result-' + key + '.png');
+    findImage(urls, function(img){
+      if(!img) return;
+      img.alt = name;
+      box.classList.remove('empty');
+      box.appendChild(img);
+    });
+  }
+
+  /* 角色名片內容（手機卡片背面、電腦版左側卡片共用）：開場句、角色圖、名字、標語、hashtag、稀有度、頁尾 */
+  function fillCardArt(el, key, lion){
+    el.innerHTML =
+      '<div class="ca-eyebrow">你感受到魔法正在甦醒 你成為了一隻…</div><div class="ca-lion"></div>' +
+      '<div class="ca-name">' + lion.name + '</div>' +
+      '<div class="ca-tagline">' + lion.tagline.join('<br>') + '</div>' +
+      '<div class="ca-tags">' + lion.tags.map(function(t){ return '<span>#' + t + '</span>'; }).join('') + '</div>' +
+      '<div class="ca-rarity">稀有度 ' + lion.rarity + '%</div>' +
+      '<div class="ca-foot">小女孩和花花獅工作室 © PLUDDIE STUDIO</div>';
+    loadLionPng(el.querySelector('.ca-lion'), key, lion.name);
+  }
+
+  function relationHtml(names){
+    return names.map(function(n){
+      return '<div class="rw-rel-item"><div class="rw-rel-thumb" data-key="' + NAME_TO_KEY[n] + '" data-name="' + n + '"></div>' +
+             '<div class="rw-rel-name">' + n + '</div></div>';
+    }).join('');
+  }
+
+  function renderResult(){
+    var key = currentResult.key, lion = currentResult.lion;
+
+    /* 手機：結果卡片。正面＝整張 9:16 結果圖（img/result-{key}.jpg），載入成功才顯示，沒檔案就是斜紋佔位；
+       找到的檔案網址記在 currentResult.resultUrl，「領取魔法獅檔案」下載的就是它。
+       背面可選：img/result-{key}-back.jpg（每隻不同）或 img/result-back.jpg（共用），沒有就用內建的卡片背面 */
+    var front = document.getElementById('rc-front'), back = document.getElementById('rc-back');
+    document.getElementById('rc-card').classList.remove('flipped');
+    var cardWrap = document.getElementById('res-card-wrap');
+    cardWrap.style.removeProperty('--rc-ratio');
+    front.innerHTML = '';
+    front.classList.add('empty');
+    back.querySelectorAll('img').forEach(function(el){ el.remove(); });
+    currentResult.resultUrl = null;
+    findImage(['jpg', 'jpeg'].map(function(e){ return 'img/result-' + key + '.' + e; }), function(img){
+      if(!img || currentResult.key !== key) return;   /* 沒檔案，或載入期間已經換成別隻獅子了 */
+      img.alt = lion.name;
+      currentResult.resultUrl = img.src;
+      cardWrap.style.setProperty('--rc-ratio', img.naturalWidth / img.naturalHeight);
+      front.classList.remove('empty');
+      front.appendChild(img);
+    });
+    findImage(['img/result-' + key + '-back.jpg', 'img/result-back.jpg'], function(img){
+      if(!img || currentResult.key !== key) return;
+      back.appendChild(img);
+    });
+    fillCardArt(document.getElementById('rc-back-art'), key, lion);
+
+    /* 電腦/橫向平板：用資料組成的各區塊 */
+    document.getElementById('rw-desc').textContent = lion.desc;
+
+    var statsEl = document.getElementById('rw-stats');
+    statsEl.innerHTML = Object.keys(STAT_LABELS).map(function(k){
+      return '<div class="rw-stat"><div class="lbl">' + STAT_LABELS[k] + '</div><div class="rw-stat-bar"><div class="rw-stat-fill" data-v="' +
+             Math.max(0, Math.min(10, lion.stats[k])) * 10 + '"></div></div></div>';
+    }).join('');
+    /* 等畫面排好再把數值條拉到定位，才會有慢慢長出來的動畫 */
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      statsEl.querySelectorAll('.rw-stat-fill').forEach(function(f){ f.style.width = f.dataset.v + '%'; });
+    }); });
+
+    fillCardArt(document.getElementById('rw-card-art'), key, lion);
+    document.getElementById('rw-attract').innerHTML = relationHtml(lion.attract);
+    document.getElementById('rw-clash').innerHTML = relationHtml(lion.clash);
+    document.querySelectorAll('.rw-rel-thumb').forEach(function(box){ loadLionPng(box, box.dataset.key, box.dataset.name); });
+  }
+
+  /* 結果頁的小互動：手指/滑鼠經過會灑出淺黃/白色的魔法星塵，點一下爆開一圈；寬螢幕時魔法獅還會跟著游標微微傾斜 */
+  (function initResultMagic(){
+    var screen = screens.result, cv = document.getElementById('res-sparkle'), ctx = cv.getContext('2d');
+    var parts = [], running = false, lastX = -99, lastY = -99, dpr = 1;
+    var DUST = ['255,255,255', '245,231,166'];   /* 白 / 淺黃 */
+
+    function fit(){
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = screen.clientWidth * dpr; cv.height = screen.clientHeight * dpr;
+    }
+    function pos(e){
+      var r = screen.getBoundingClientRect();
+      return { x: (e.clientX - r.left) * (screen.clientWidth / r.width), y: (e.clientY - r.top) * (screen.clientHeight / r.height) };
+    }
+    function spawn(x, y, n, speed){
+      for(var i = 0; i < n; i++){
+        var a = Math.random() * Math.PI * 2, s = (0.3 + Math.random()) * speed;
+        parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 0.5, life: 1,
+                     size: 5 + Math.random() * 8, rgb: DUST[Math.random() < 0.5 ? 0 : 1] });
+      }
+      if(!running){ running = true; requestAnimationFrame(tick); }
+    }
+    function star(x, y, r){
+      ctx.beginPath();
+      for(var i = 0; i < 8; i++){
+        var rr = i % 2 ? r * 0.3 : r, ang = i * Math.PI / 4 - Math.PI / 2;
+        ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(ang) * rr, y + Math.sin(ang) * rr);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    function tick(){
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalCompositeOperation = 'lighter';
+      parts = parts.filter(function(p){ return p.life > 0; });
+      parts.forEach(function(p){
+        p.life -= 0.022; p.vy += 0.03; p.x += p.vx; p.y += p.vy;
+        ctx.fillStyle = 'rgba(' + p.rgb + ',' + Math.max(0, p.life) * 0.9 + ')';
+        star(p.x, p.y, p.size * Math.max(0.2, p.life));
+      });
+      if(parts.length){ requestAnimationFrame(tick); } else { running = false; }
+    }
+
+    if(!reduceMotion){
+      screen.addEventListener('pointermove', function(e){
+        if(!screen.classList.contains('active')) return;
+        var p = pos(e);
+        if(Math.hypot(p.x - lastX, p.y - lastY) > 16){ spawn(p.x, p.y, 2, 1.2); lastX = p.x; lastY = p.y; }
+      });
+      screen.addEventListener('pointerdown', function(e){
+        if(e.target.closest('button')) return;
+        var p = pos(e); spawn(p.x, p.y, 18, 3.4);
+      });
+
+      var stage = document.getElementById('rw-stage'), card = document.getElementById('rw-card');
+      stage.addEventListener('pointermove', function(e){
+        var r = stage.getBoundingClientRect();
+        var nx = ((e.clientX - r.left) / r.width - 0.5) * 2, ny = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        card.style.setProperty('--ry', (nx * 10) + 'deg');
+        card.style.setProperty('--rx', (-ny * 8) + 'deg');
+      });
+      stage.addEventListener('pointerleave', function(){
+        card.style.removeProperty('--rx'); card.style.removeProperty('--ry');
+      });
+    }
+    fit();
+    window.addEventListener('resize', fit);
+  })();
+
+  function bindAll(selector, handler){
+    document.querySelectorAll(selector).forEach(function(el){ el.addEventListener('click', handler); });
+  }
+
+  /* 手機結果卡片：手指（滑鼠）拖過去卡片會傾斜；點一下卡片或按「翻轉卡片」就翻面 */
+  (function initResultCard(){
+    var scene = document.getElementById('res-card-wrap'), tilt = document.getElementById('rc-tilt'), card = document.getElementById('rc-card');
+    var down = false, moved = false, sx = 0, sy = 0;
+
+    function flip(){ card.classList.toggle('flipped'); }
+    function reset(){ tilt.style.removeProperty('--rx'); tilt.style.removeProperty('--ry'); }
+    function lean(e){
+      if(reduceMotion) return;
+      var r = scene.getBoundingClientRect();
+      var nx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - 0.5) * 2));
+      var ny = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - 0.5) * 2));
+      tilt.style.setProperty('--ry', (nx * 14) + 'deg');
+      tilt.style.setProperty('--rx', (-ny * 10) + 'deg');
+    }
+
+    scene.addEventListener('pointerdown', function(e){ down = true; moved = false; sx = e.clientX; sy = e.clientY; lean(e); });
+    scene.addEventListener('pointermove', function(e){
+      if(e.pointerType !== 'mouse' && !down) return;
+      if(down && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) moved = true;
+      lean(e);
+    });
+    scene.addEventListener('pointerup', function(){ if(down && !moved) flip(); down = false; reset(); });
+    scene.addEventListener('pointercancel', function(){ down = false; reset(); });
+    scene.addEventListener('pointerleave', function(){ if(!down) reset(); });
+    bindAll('.js-flip', flip);
+  })();
+
+  /* ---------------- 保護插畫：擋掉拖曳，以及圖片/影片/畫布上的右鍵（長按）選單 ---------------- */
+  document.addEventListener('dragstart', function(e){ e.preventDefault(); });
+  document.addEventListener('contextmenu', function(e){
+    if(e.target.closest && e.target.closest('.media-wrap, .res-card-wrap, .rw-stage, .rw-rel-thumb, .magic-stage')) e.preventDefault();
+  });
+
+  /* ---------------- 事件 ---------------- */
+  document.getElementById('btn-start').addEventListener('click', function(){
+    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    showScreen('quiz');
+    renderQuestion();
+  });
+  document.getElementById('btn-back').addEventListener('click', goBack);
+
+  bindAll('.js-restart', function(){
+    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    showScreen('start');
+  });
+
+  bindAll('.js-save', function(){
+    var lion = currentResult.lion, url = currentResult.resultUrl;
+    if(!url){
+      alert('「' + lion.name + '」的結果圖還沒準備好，請把 img/result-' + currentResult.key + '.jpg 放進 img 資料夾。');
+      return;
+    }
+
+    /* 結果頁顯示的圖片跟下載的檔案是同一張（img/result-{key}.jpg） */
+    var ext = url.split('?')[0].split('.').pop().toLowerCase();
+    var filename = lion.name + '.' + ext;
+    var mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[ext] || 'image/jpeg';
+
+    /* 桌面版 Chrome / Edge 支援 File System Access API：會跳出瀏覽器原生的「另存新檔」視窗，
+       讓使用者自己選存檔位置與檔名。Safari／Firefox／手機瀏覽器不支援，會退回一般下載。 */
+    if(window.showSaveFilePicker){
+      var accept = {}; accept[mime] = ['.' + ext];
+      window.showSaveFilePicker({ suggestedName: filename, types: [{ description: '圖片', accept: accept }] })
+        .then(function(handle){
+          return fetch(url).then(function(resp){
+            if(!resp.ok) throw new Error('not found');
+            return resp.blob();
+          }).then(function(blob){
+            return handle.createWritable().then(function(writable){
+              return writable.write(blob).then(function(){ return writable.close(); });
+            });
+          });
+        })
+        .catch(function(err){
+          if(err && err.name === 'AbortError') return;   // 使用者自己按取消，不用提示
+          alert('下載失敗，請再試一次。');
+        });
+    } else {
+      var link = document.createElement('a');
+      link.download = filename;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
