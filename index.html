@@ -75,6 +75,8 @@
   .media-wrap img, .media-wrap video{
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   }
+  @keyframes mediaIn{ from{ opacity:0; } to{ opacity:1; } }
+  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
   .media-placeholder{
     position:absolute; inset:0;
     background:var(--stripes);
@@ -156,7 +158,7 @@
     position:absolute; inset:0;
     transition:opacity .22s ease;
   }
-  .quiz-content.fading{ opacity:0; }
+  .quiz-content.fading{ opacity:0; pointer-events:none; }
 
   .quiz-overlay{
     position:absolute; inset:0; z-index:1;
@@ -432,7 +434,7 @@
 
   @media (prefers-reduced-motion:reduce){
     .screen{ transition:none; }
-    .fleck, .rc-tilt, .rw-card{ animation:none; }
+    .fleck, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:none; }
   }
 </style>
 </head>
@@ -591,30 +593,42 @@
     return list;
   }
 
-  function loadFirstMedia(candidates, onReady){
-    var i = 0;
-    (function tryNext(){
-      if(i >= candidates.length) return;
-      var c = candidates[i++];
-      if(c.type === 'video'){
-        var v = document.createElement('video');
-        v.muted = true; v.playsInline = true; v.loop = true; v.autoplay = true;
-        v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-        v.setAttribute('webkit-playsinline', '');
-        v.addEventListener('loadeddata', function(){
-          onReady(v);
-          v.play().catch(function(){});
-        });
-        v.addEventListener('error', tryNext);
-        v.src = c.src;
-        v.load();
-      } else {
-        var img = new Image();
-        img.addEventListener('load', function(){ onReady(img); });
-        img.addEventListener('error', tryNext);
-        img.src = c.src;
+  /* 同時載入清單裡所有候選檔案（不用一個一個等 404），但依清單順序挑第一個存在的；全部都沒有就回傳 null。
+     所以同一張圖請只放一種格式，舊的大檔案不要留著，不然會被一起下載。 */
+  function findMedia(list, done){
+    var results = [], finished = false;
+    function settle(){
+      if(finished) return;
+      for(var i = 0; i < list.length; i++){
+        if(results[i] === undefined) return;            /* 順位較前面的還在載入，先等它 */
+        if(results[i]){ finished = true; done(results[i]); return; }
       }
-    })();
+      finished = true; done(null);
+    }
+    list.forEach(function(c, i){
+      var el;
+      function ok(){ if(results[i] === undefined){ results[i] = el; settle(); } }
+      function fail(){ if(results[i] === undefined){ results[i] = null; settle(); } }
+      if(c.type === 'video'){
+        el = document.createElement('video');
+        el.muted = true; el.playsInline = true; el.loop = true; el.autoplay = true;
+        el.setAttribute('muted', ''); el.setAttribute('playsinline', ''); el.setAttribute('webkit-playsinline', '');
+        el.addEventListener('loadeddata', function(){ ok(); if(results[i] === el) el.play().catch(function(){}); });
+        el.addEventListener('error', fail);
+        setTimeout(fail, 3000);      /* 影片 3 秒內沒準備好（太大或手機擋住預載），就改用後面的圖片，不讓畫面一直空著 */
+        el.src = c.src;
+        el.load();
+      } else {
+        el = new Image();
+        el.addEventListener('load', ok);
+        el.addEventListener('error', fail);
+        el.src = c.src;
+      }
+    });
+  }
+
+  function findImage(urls, done){
+    findMedia(urls.map(function(u){ return { type:'image', src:u }; }), done);
   }
 
   /* 把載入好的背景放進容器，並移除斜紋佔位 */
@@ -642,7 +656,8 @@
   (function initHeroMedia(){
     var wrap = document.getElementById('hero-media-wrap');
     var placeholder = document.getElementById('hero-placeholder');
-    loadFirstMedia(buildMediaCandidates('img/hero'), function(media){
+    findMedia(buildMediaCandidates('img/hero'), function(media){
+      if(!media) return;
       media.alt = '魔法森林入口';
       mountMedia(wrap, placeholder, media);
     });
@@ -796,19 +811,38 @@
     document.getElementById('q-total').textContent = n;
   }
 
-  /* ---------------- 每題全螢幕背景圖（固定用 jpg，不需要影片/動圖） ---------------- */
+  /* ---------------- 每題全螢幕背景圖（固定用 jpg）：先預載接下來幾題，圖準備好才讓題目浮現 ---------------- */
   var quizMediaWrap = document.getElementById('quiz-media-wrap');
   var quizPlaceholder = document.getElementById('quiz-placeholder');
-  function loadQuestionMedia(qNum){
+  var qImages = {};          /* 題號 → 已經（或正在）載入的 Image，載過的就不會重抓 */
+  var qLoadToken = 0;
+
+  function questionImage(n){
+    if(n < 1 || n > QUESTIONS.length) return null;
+    if(!qImages[n]){ qImages[n] = new Image(); qImages[n].src = 'img/q' + n + '.jpg'; }
+    return qImages[n];
+  }
+
+  /* 把第 qNum 題的背景放進畫面，放好（或 2.5 秒還沒好）就呼叫 done；同時開始預載後面兩題 */
+  function loadQuestionMedia(qNum, done){
+    var token = ++qLoadToken, finished = false, img = questionImage(qNum);
     quizMediaWrap.innerHTML = '';
     quizMediaWrap.appendChild(quizPlaceholder);
-    var img = new Image();
-    img.addEventListener('load', function(){
-      img.alt = '第 ' + qNum + ' 題場景';
-      mountMedia(quizMediaWrap, quizPlaceholder, img);
-    });
-    img.src = 'img/q' + qNum + '.jpg';
+    function finish(){ if(!finished){ finished = true; done(); } }
+    function settle(){
+      if(token === qLoadToken && img.naturalWidth){
+        img.alt = '第 ' + qNum + ' 題場景';
+        mountMedia(quizMediaWrap, quizPlaceholder, img);
+      }
+      questionImage(qNum + 1); questionImage(qNum + 2);
+      finish();
+    }
+    if(img.complete){ settle(); return; }
+    img.addEventListener('load', settle);
+    img.addEventListener('error', settle);
+    setTimeout(finish, 2500);
   }
+  questionImage(1); questionImage(2);
 
   /* ---------------- 渲染題目 ---------------- */
   var qText = document.getElementById('q-text');
@@ -817,11 +851,11 @@
 
   var isTransitioning = false;
 
-  function renderQuestion(){
+  function renderQuestion(done){
     var item = QUESTIONS[idx];
-    if(!item) return; /* 防呆：idx 不小心超出範圍時，安靜地不做任何事，不要整頁壞掉 */
+    if(!item){ done(); return; } /* 防呆：idx 不小心超出範圍時，安靜地不做任何事，不要整頁壞掉 */
     renderProgress();
-    loadQuestionMedia(idx+1);
+    loadQuestionMedia(idx+1, done);
     qText.innerHTML = item.q;
     qOptions.innerHTML = '';
     item.opts.forEach(function(o){
@@ -838,10 +872,11 @@
     var content = document.getElementById('quiz-content');
     content.classList.add('fading');
     setTimeout(function(){
-      renderQuestion();
-      requestAnimationFrame(function(){
-        content.classList.remove('fading');
-        isTransitioning = false;
+      renderQuestion(function(){
+        requestAnimationFrame(function(){
+          content.classList.remove('fading');
+          isTransitioning = false;
+        });
       });
     }, 220);
   }
@@ -871,9 +906,10 @@
   }
 
   /* ---------------- 點亮魔法：Q8 之後，滑動塗色點亮花花獅輪廓，再進入結果頁 ---------------- */
+  /* 結果在點亮魔法開始時就先算好，這樣使用者塗色的同時，結果頁的圖片就已經在背景載入了 */
   function finishQuiz(){
-    computeResult();
     showScreen('result');
+    revealStats();
   }
 
   var magicStage = document.getElementById('magic-stage');
@@ -1015,6 +1051,7 @@
     magicSkip.classList.remove('show');
     magicTitle.innerHTML = '用手指在花花獅上滑動<br>點亮牠的魔法';
     showScreen('magic');
+    computeResult();
     magic = null;
     setupMagic();
     /* 萬一畫布沒準備好（magic 是 null），「直接揭曉」馬上出現，避免使用者卡住 */
@@ -1081,18 +1118,6 @@
   var NAME_TO_KEY = {};
   Object.keys(LIONS).forEach(function(k){ NAME_TO_KEY[LIONS[k].name] = k; });
 
-  /* 依序嘗試網址清單，找到第一張存在的圖就回傳載入好的 <img>；全部都沒有就回傳 null */
-  function findImage(urls, done){
-    var i = 0;
-    (function next(){
-      if(i >= urls.length){ done(null); return; }
-      var img = new Image();
-      img.addEventListener('load', function(){ done(img); });
-      img.addEventListener('error', next);
-      img.src = urls[i++];
-    })();
-  }
-
   /* 角色去背圖（寬螢幕版的主角與共鳴/異頻縮圖用）：lion-{key}.png / .webp / .gif，或 result-{key}.png。
      載入成功才放進去，沒有就維持斜紋佔位 */
   function loadLionPng(box, key, name){
@@ -1120,12 +1145,22 @@
     loadLionPng(el.querySelector('.ca-lion'), key, lion.name);
   }
 
+  /* 結果頁出現後，才把魔法能量數值條拉到定位，才看得到慢慢長出來的動畫 */
+  function revealStats(){
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      document.querySelectorAll('.rw-stat-fill').forEach(function(f){ f.style.width = f.dataset.v + '%'; });
+    }); });
+  }
+
   function relationHtml(names){
     return names.map(function(n){
       return '<div class="rw-rel-item"><div class="rw-rel-thumb" data-key="' + NAME_TO_KEY[n] + '" data-name="' + n + '"></div>' +
              '<div class="rw-rel-name">' + n + '</div></div>';
     }).join('');
   }
+
+  var wideQuery = window.matchMedia ? window.matchMedia('(min-aspect-ratio: 1/1)') : null;
+  function isWide(){ return !!(wideQuery && wideQuery.matches); }
 
   function renderResult(){
     var key = currentResult.key, lion = currentResult.lion;
@@ -1149,11 +1184,16 @@
       front.classList.remove('empty');
       front.appendChild(img);
     });
-    findImage(['img/result-' + key + '-back.jpg', 'img/result-back.jpg'], function(img){
-      if(!img || currentResult.key !== key) return;
-      back.appendChild(img);
-    });
-    fillCardArt(document.getElementById('rc-back-art'), key, lion);
+
+    /* 只載入「目前這個版面看得到」的圖片：手機不用去抓電腦版才會出現的角色圖，省流量也比較快 */
+    if(!isWide()){
+      findImage(['img/result-' + key + '-back.jpg', 'img/result-back.jpg'], function(img){
+        if(!img || currentResult.key !== key) return;
+        back.appendChild(img);
+      });
+      fillCardArt(document.getElementById('rc-back-art'), key, lion);
+      return;
+    }
 
     /* 電腦/橫向平板：用資料組成的各區塊 */
     document.getElementById('rw-desc').textContent = lion.desc;
@@ -1163,15 +1203,19 @@
       return '<div class="rw-stat"><div class="lbl">' + STAT_LABELS[k] + '</div><div class="rw-stat-bar"><div class="rw-stat-fill" data-v="' +
              Math.max(0, Math.min(10, lion.stats[k])) * 10 + '"></div></div></div>';
     }).join('');
-    /* 等畫面排好再把數值條拉到定位，才會有慢慢長出來的動畫 */
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){
-      statsEl.querySelectorAll('.rw-stat-fill').forEach(function(f){ f.style.width = f.dataset.v + '%'; });
-    }); });
 
     fillCardArt(document.getElementById('rw-card-art'), key, lion);
     document.getElementById('rw-attract').innerHTML = relationHtml(lion.attract);
     document.getElementById('rw-clash').innerHTML = relationHtml(lion.clash);
     document.querySelectorAll('.rw-rel-thumb').forEach(function(box){ loadLionPng(box, box.dataset.key, box.dataset.name); });
+  }
+
+  if(wideQuery && wideQuery.addEventListener){
+    wideQuery.addEventListener('change', function(){
+      if(!currentResult) return;
+      renderResult();
+      if(screens.result.classList.contains('active')) revealStats();
+    });
   }
 
   /* 結果頁的小互動：手指/滑鼠經過會灑出淺黃/白色的魔法星塵，點一下爆開一圈；寬螢幕時魔法獅還會跟著游標微微傾斜 */
@@ -1283,8 +1327,10 @@
   /* ---------------- 事件 ---------------- */
   document.getElementById('btn-start').addEventListener('click', function(){
     idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    var content = document.getElementById('quiz-content');
+    content.classList.add('fading');
     showScreen('quiz');
-    renderQuestion();
+    renderQuestion(function(){ content.classList.remove('fading'); });
   });
   document.getElementById('btn-back').addEventListener('click', goBack);
 
