@@ -167,7 +167,7 @@
   .quiz-overlay{
     position:absolute; inset:0; z-index:1;
     display:flex; flex-direction:column; align-items:center;
-    padding:calc(18px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
+    padding:calc(18px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
   }
   .quiz-overlay > .progress-wrap,
   .quiz-overlay > .q-body,
@@ -253,11 +253,11 @@
      卡片大小隨視窗縮放、形狀跟著圖片比例走，所以不會裁切；手指拖過去會傾斜，點一下或按「翻轉卡片」翻面 */
   .res-card-wrap{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
-    padding:calc(12px + env(safe-area-inset-top)) 0 4px;
+    padding:calc(24px + env(safe-area-inset-top)) 0 16px;    /* 上 24px、下 16px ＋ 翻轉按鈕自己的 8px 內距 ＝ 卡片上下看起來一樣寬 */
     perspective:1100px; touch-action:none;
   }
   .rc-tilt{
-    width:min(88vw, calc((100dvh - 240px) * var(--rc-ratio, .5625)));
+    width:min(88vw, calc((100dvh - 264px) * var(--rc-ratio, .5625)));
     aspect-ratio:var(--rc-ratio, .5625);
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
