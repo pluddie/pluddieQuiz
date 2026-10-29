@@ -279,7 +279,7 @@
   .rc-front.empty{ background:var(--stripes); }
   .rc-back{ transform:rotateY(180deg); }
   .rc-back, .rw-card{
-    background:linear-gradient(160deg, #0f3a4c, #0a2a38 60%, #07202c);
+    background:#000;
     border:1px solid rgba(245,231,166,.45);
   }
 
@@ -448,10 +448,11 @@
      這個 @media 條件、JS 裡的 wideQuery 要保持一致。放在 768px 那段後面，字級才會以這裡為準 */
   @keyframes riseIn{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
   @media (min-aspect-ratio:1/1){
-    :root{ --art-ratio:.88; --art-w:min(56vw, calc(100dvh * var(--art-ratio))); }  /* 插畫區寬度 = 視窗高度 × 這個數字（9:16 原始是 .5625）；越大 → 插畫區越寬、圖越放大、下方空白裁越多 */
+    :root{ --art-ratio:.88; --art-w:min(52vw, calc(100dvh * var(--art-ratio))); }  /* 插畫的寬度 = 視窗高度 × 這個數字（9:16 原始是 .5625）：越大 → 圖越放大、下方空白裁越多。插畫區本身最多佔 52% 寬，右邊留給內容 */
     .starfield{ display:block; }
     .media-wrap{ right:auto; width:var(--art-w); }
-    .media-wrap img, .media-wrap video{ object-position:center top; }
+    /* 圖的大小只看視窗高度，不會因為視窗變窄而縮小；插畫區比圖窄的時候，兩側（置中）被裁掉一點，而不是把圖縮小 */
+    .media-wrap img, .media-wrap video{ inset:0 auto auto 50%; width:auto; max-width:none; height:calc(100dvh * 16 / 9 * var(--art-ratio)); transform:translateX(-50%); }
     .res-card-wrap, .rc-flip, .res-actions--bar{ display:none; }
     .res-wide{ display:flex; }
     .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
@@ -462,8 +463,8 @@
     .start-overlay{ padding:24px 0; }
     .start-overlay > .start-text{ margin-top:auto; }
     .start-overlay > .start-cta{ margin-bottom:auto; }
-    .quiz-overlay{ padding-top:24px; padding-bottom:24px; }
-    .quiz-overlay > .progress-wrap{ margin-top:auto; margin-bottom:clamp(72px, 13vh, 140px); }
+    .quiz-overlay{ padding:24px clamp(24px, 4vw, 56px); }
+    .quiz-overlay > .progress-wrap{ margin-top:auto; margin-bottom:clamp(28px, 13vh, 140px); }
     .quiz-overlay > .options{ margin-bottom:auto; }
 
     /* 首頁文字：拉開間距、整組上下置中、依序淡入 */
@@ -484,6 +485,15 @@
     .start-text > :nth-child(3){ animation-delay:.6s; }
     .start-text > :nth-child(4){ animation-delay:.8s; }
     .start-cta > *{ animation-delay:1.05s; }
+  }
+
+  /* 橫向但很矮的視窗（高 ≤ 560px）：題目頁的間距、字級收緊，才放得進去；還是放不下時，右側會變成可以捲動 */
+  @media (min-aspect-ratio:1/1) and (max-height:560px){
+    .quiz-overlay{ padding-top:14px; padding-bottom:14px; }
+    .quiz-overlay > .progress-wrap{ margin-bottom:clamp(16px, 5vh, 32px); }
+    .q-text{ font-size:13px; line-height:1.5; }
+    .options{ gap:6px; margin-top:10px; }
+    .opt-btn{ min-height:38px; padding-top:6px; padding-bottom:6px; font-size:12.5px; }
   }
 
   /* 橫向但很窄的視窗：右側變得很窄，選項改成可以換行，不要被「…」截掉 */
@@ -1240,6 +1250,13 @@
   var wideQuery = window.matchMedia ? window.matchMedia('(min-aspect-ratio: 1/1)') : null;
   function isWide(){ return !!(wideQuery && wideQuery.matches); }
 
+  /* 結果圖檔的副檔名、下載檔名、格式 */
+  function resultMeta(url, lion){
+    var ext = url.split('?')[0].split('.').pop().toLowerCase();
+    return { filename: lion.name + '.' + ext, ext: ext,
+             mime: { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[ext] || 'image/jpeg' };
+  }
+
   function renderResult(){
     var key = currentResult.key, lion = currentResult.lion;
 
@@ -1254,6 +1271,7 @@
     front.classList.add('empty');
     back.querySelectorAll('img').forEach(function(el){ el.remove(); });
     currentResult.resultUrl = null;
+    currentResult.resultFile = null;
     findImage(['jpg', 'jpeg'].map(function(e){ return 'img/result-' + key + '.' + e; }), function(img){
       if(!img || currentResult.key !== key) return;   /* 沒檔案，或載入期間已經換成別隻獅子了 */
       img.alt = lion.name;
@@ -1261,6 +1279,15 @@
       cardWrap.style.setProperty('--rc-ratio', img.naturalWidth / img.naturalHeight);
       front.classList.remove('empty');
       front.appendChild(img);
+
+      /* 先把圖檔準備好（剛剛已經下載過，會直接從快取拿）：手機按「領取」時要在點擊當下立刻叫出分享選單，來不及再去抓。
+         放在顯示之後，而且瀏覽器不支援的話就跳過，絕對不會影響圖片顯示 */
+      if(window.fetch && window.File){
+        var meta = resultMeta(img.src, lion);
+        fetch(img.src).then(function(r){ return r.blob(); }).then(function(blob){
+          if(currentResult.key === key) currentResult.resultFile = new File([blob], meta.filename, { type: blob.type || meta.mime });
+        }).catch(function(){});
+      }
     });
 
     /* 只載入「目前這個版面看得到」的圖片：手機不用去抓電腦版才會出現的角色圖，省流量也比較快 */
@@ -1417,23 +1444,11 @@
     showScreen('start');
   });
 
-  bindAll('.js-save', function(){
-    var lion = currentResult.lion, url = currentResult.resultUrl;
-    if(!url){
-      alert('「' + lion.name + '」的結果圖還沒準備好，請把 img/result-' + currentResult.key + '.jpg 放進 img 資料夾。');
-      return;
-    }
-
-    /* 結果頁顯示的圖片跟下載的檔案是同一張（img/result-{key}.jpg） */
-    var ext = url.split('?')[0].split('.').pop().toLowerCase();
-    var filename = lion.name + '.' + ext;
-    var mime = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[ext] || 'image/jpeg';
-
-    /* 桌面版 Chrome / Edge 支援 File System Access API：會跳出瀏覽器原生的「另存新檔」視窗，
-       讓使用者自己選存檔位置與檔名。Safari／Firefox／手機瀏覽器不支援，會退回一般下載。 */
+  /* 存成檔案：桌面版 Chrome / Edge 會跳出原生的「另存新檔」視窗讓使用者選位置；其他瀏覽器用一般下載 */
+  function saveToFile(url, meta){
     if(window.showSaveFilePicker){
-      var accept = {}; accept[mime] = ['.' + ext];
-      window.showSaveFilePicker({ suggestedName: filename, types: [{ description: '圖片', accept: accept }] })
+      var accept = {}; accept[meta.mime] = ['.' + meta.ext];
+      window.showSaveFilePicker({ suggestedName: meta.filename, types: [{ description: '圖片', accept: accept }] })
         .then(function(handle){
           return fetch(url).then(function(resp){
             if(!resp.ok) throw new Error('not found');
@@ -1450,12 +1465,32 @@
         });
     } else {
       var link = document.createElement('a');
-      link.download = filename;
+      link.download = meta.filename;
       link.href = url;
       document.body.appendChild(link);
       link.click();
       link.remove();
     }
+  }
+
+  bindAll('.js-save', function(){
+    var lion = currentResult.lion, url = currentResult.resultUrl;
+    if(!url){
+      alert('「' + lion.name + '」的結果圖還沒準備好，請把 img/result-' + currentResult.key + '.jpg 放進 img 資料夾。');
+      return;
+    }
+    var meta = resultMeta(url, lion), file = currentResult.resultFile;
+
+    /* 手機／平板（觸控）：叫出系統的分享選單，裡面有「儲存圖片」（iPhone 會存進相簿）、也能直接傳給朋友。
+       需要 https 網址才能用；不支援、或使用者沒有權限時，退回存成檔案 */
+    var touch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    if(touch && file && navigator.canShare && navigator.canShare({ files: [file] })){
+      navigator.share({ files: [file], title: lion.name }).catch(function(err){
+        if(!err || err.name !== 'AbortError') saveToFile(url, meta);   // 取消分享就什麼都不用做
+      });
+      return;
+    }
+    saveToFile(url, meta);
   });
 
 })();
