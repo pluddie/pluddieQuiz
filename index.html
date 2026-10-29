@@ -253,11 +253,11 @@
      卡片大小隨視窗縮放、形狀跟著圖片比例走，所以不會裁切；手指拖過去會傾斜，點一下或按「翻轉卡片」翻面 */
   .res-card-wrap{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
-    padding:calc(24px + env(safe-area-inset-top)) 0 16px;    /* 上 24px、下 16px ＋ 翻轉按鈕自己的 8px 內距 ＝ 卡片上下看起來一樣寬 */
+    padding:calc(12px + env(safe-area-inset-top)) 0 4px;
     perspective:1100px; touch-action:none;
   }
   .rc-tilt{
-    width:min(88vw, calc((100dvh - 264px) * var(--rc-ratio, .5625)));
+    width:min(92vw, calc((100dvh - 160px) * var(--rc-ratio, .5625)));   /* 160px ＝ 下面的翻轉按鈕與兩顆按鈕所佔的高度，其餘都留給卡片 */
     aspect-ratio:var(--rc-ratio, .5625);
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
@@ -286,17 +286,19 @@
   /* 角色名片內容：手機卡片背面、電腦版左側卡片共用（上方是圖＋文字，只有頁尾固定在卡片最下面） */
   .card-art{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-    gap:8px; padding:4.5% 8% 5%; text-align:center; color:var(--parchment);
+    gap:8px; padding:4.5% 6% 5%; text-align:center; color:var(--parchment);
   }
   .ca-eyebrow{ font-size:12px; line-height:1.6; letter-spacing:.06em; color:var(--parchment-dim); }
-  .ca-lion{ flex:0 1 auto; min-height:0; width:100%; margin-bottom:-4px; display:flex; align-items:center; justify-content:center; }
-  .ca-lion.trimmed{ margin-bottom:0; }
-  .ca-lion:not(.trimmed) img{ transform:scale(1.15); transform-origin:center bottom; }   /* 讀不到圖片像素時的備援：直接放大一點 */
+  /* 角色圖上下的距離：裁掉透明留白後（trimmed）上下各 18px；讀不到圖片像素時（直接雙擊 html），
+     圖片自己的透明留白會讓下面看起來比較大，所以上方多留一點來補 */
+  .ca-lion{ flex:0 1 auto; min-height:0; width:100%; margin:10px 0; display:flex; align-items:center; justify-content:center; }
+  .ca-lion:not(.trimmed){ margin:18px 0 0; }
+  .ca-lion:not(.trimmed) img{ transform:scale(1.15); }   /* 讀不到圖片像素時的備援：直接放大一點 */
   .ca-lion img, .ca-lion canvas{
     max-width:100%; max-height:100%; width:auto; height:auto; display:block;
     filter:drop-shadow(0 12px 18px rgba(0,0,0,.35));
   }
-  .ca-name{ font-weight:900; font-size:30px; line-height:1.25; color:var(--gold); }
+  .ca-name{ font-weight:900; font-size:24px; line-height:1.25; color:var(--gold); }
   .ca-tagline{ font-size:13px; line-height:1.7; }
   .ca-tags{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:8px; }
   .ca-tags span{ font-size:11px; padding:3px 10px; border-radius:999px; background:var(--parchment); color:var(--bg-deep); font-weight:700; }
@@ -335,6 +337,7 @@
     transition:transform .25s ease-out;
     animation:cardFloat 5s ease-in-out infinite;
   }
+  .rw-card .ca-br{ display:none; }   /* 電腦版這兩行不強制換行 */
   .rw-card .ca-eyebrow{ font-size:13px; }
   .rw-card .ca-name{ font-size:clamp(22px, 4.6vh, 42px); }
   .rw-card .ca-tagline{ font-size:clamp(11px, 1.9vh, 16px); }
@@ -1207,12 +1210,12 @@
   /* 角色名片內容（手機卡片背面、電腦版左側卡片共用）：開場句、角色圖、名字、標語、hashtag、稀有度、頁尾 */
   function fillCardArt(el, key, lion){
     el.innerHTML =
-      '<div class="ca-eyebrow">你感受到魔法正在甦醒<br>你成為了一隻…</div><div class="ca-lion"></div>' +
+      '<div class="ca-eyebrow">你感受到魔法正在甦醒<br class="ca-br"> 你成為了一隻…</div><div class="ca-lion"></div>' +
       '<div class="ca-name">' + lion.name + '</div>' +
       '<div class="ca-tagline">' + lion.tagline.join('<br>') + '</div>' +
       '<div class="ca-tags">' + lion.tags.map(function(t){ return '<span>#' + t + '</span>'; }).join('') + '</div>' +
       '<div class="ca-rarity">稀有度 ' + lion.rarity + '%</div>' +
-      '<div class="ca-foot">小女孩和花花獅工作室<br>© PLUDDIE STUDIO</div>' +
+      '<div class="ca-foot">小女孩和花花獅工作室<br class="ca-br"> © PLUDDIE STUDIO</div>' +
       [1, 2, 3, 4, 5].map(function(n){
         return '<svg class="ca-spark s' + n + '" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#fff"/></svg>';
       }).join('');
