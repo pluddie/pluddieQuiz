@@ -16,6 +16,8 @@
     --gold:#f5e7a6;
     --title-teal:#F3E8AE;
     --block-bg:#225772;
+    --forest-rgb:8,47,50;   /* 首頁用的深綠：量測自首頁 mp4 畫面下方的深色（截圖是 P3 色域，已換算成 sRGB #082f32） */
+    --forest:rgb(var(--forest-rgb));
 
     --stripes:repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 12px, rgba(255,255,255,.015) 12px 24px);   /* 圖片還沒放時的斜紋佔位 */
   }
@@ -77,6 +79,7 @@
   }
   @keyframes mediaIn{ from{ opacity:0; } to{ opacity:1; } }
   .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
+  #hero-media-wrap{ background:var(--forest); }
   .media-placeholder{
     position:absolute; inset:0;
     background:var(--stripes);
@@ -87,6 +90,7 @@
     position:absolute; inset:0; z-index:0; display:none; pointer-events:none;
     background:var(--night);
   }
+  .app-shell.on-start .starfield{ background:var(--forest); }       /* 首頁（寬螢幕右側）改成跟 mp4 接得起來的深綠 */
   .app-shell.on-result .starfield{ display:block; }     /* 手機結果頁也顯示星空（深藍底＋光點） */
   .fleck{
     position:absolute; left:var(--x); bottom:-12px; width:var(--s); height:var(--s);
@@ -111,10 +115,10 @@
   .start-scrim{
     position:absolute; inset:0; z-index:0; pointer-events:none;
     background:linear-gradient(to top,
-      rgba(15,51,67,.96) 0%,
-      rgba(15,51,67,.82) 30%,
-      rgba(15,51,67,.35) 62%,
-      rgba(15,51,67,0) 85%);
+      rgba(var(--forest-rgb),.96) 0%,
+      rgba(var(--forest-rgb),.82) 30%,
+      rgba(var(--forest-rgb),.35) 62%,
+      rgba(var(--forest-rgb),0) 85%);
   }
   .start-spark{ position:absolute; z-index:2; opacity:.9; pointer-events:none; }
   .start-spark.sp1{ top:5%; left:6%; width:22px; }
@@ -316,8 +320,8 @@
     animation:cardFloat 5s ease-in-out infinite;
   }
   .rw-card .ca-eyebrow{ font-size:13px; }
-  .rw-card .ca-name{ font-size:clamp(30px, 4.6vh, 42px); }
-  .rw-card .ca-tagline{ font-size:clamp(13px, 1.9vh, 16px); }
+  .rw-card .ca-name{ font-size:clamp(22px, 4.6vh, 42px); }
+  .rw-card .ca-tagline{ font-size:clamp(11px, 1.9vh, 16px); }
   .rw-card .ca-tags span{ font-size:12px; }
   .rw-card .ca-rarity{ font-size:13px; }
   .rw-card .ca-foot{ font-size:11px; }
@@ -327,10 +331,13 @@
 
   .rw-panel{
     flex:1 1 56%; min-width:0; max-width:700px;
-    display:flex; flex-direction:column; justify-content:center; gap:14px;
+    display:flex; flex-direction:column; gap:14px;
     padding:clamp(18px, 4vh, 44px) clamp(40px, 8vw, 140px) clamp(12px, 2vh, 24px) 0;
     overflow-y:auto; scrollbar-width:thin;
   }
+  /* 內容不夠高時上下置中；太高時從最上面開始、可以往下捲（用 justify-content:center 會把最上面切掉） */
+  .rw-panel > :first-child{ margin-top:auto; }
+  .rw-panel > :last-child{ margin-bottom:auto; }
 
   .rw-block{ display:flex; gap:14px; padding:10px 0; }
   .rw-block-title{
@@ -350,8 +357,8 @@
     transition:width .9s cubic-bezier(.2,.8,.2,1);
   }
 
-  .rw-rels{ display:grid; grid-template-columns:1fr 1fr; }
-  .rw-rel{ padding:8px 14px; }
+  .rw-rels{ display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); }
+  .rw-rel{ min-width:0; padding:8px 14px; }
   .rw-rel + .rw-rel{ border-left:1px solid rgba(255,255,255,.18); }   /* 共鳴 / 異頻 之間的分隔線 */
   .rw-rel-label{ margin-bottom:10px; text-align:center; font-size:12px; letter-spacing:.12em; font-weight:700; color:var(--gold); }
   .rw-rel-pair{ display:flex; justify-content:center; gap:10px; }
@@ -377,9 +384,11 @@
   /* ---------- 點亮魔法：滑動塗色，把花花獅輪廓點亮 ---------- */
   #screen-magic{ background:radial-gradient(60% 45% at 50% 46%, rgba(91,224,255,.16), transparent 72%); }
   .magic-inner{
-    flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto;
     gap:20px; padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
   }
+  .magic-inner > :first-child{ margin-top:auto; }
+  .magic-inner > :last-child{ margin-bottom:auto; }
   .magic-title{
     margin:0; text-align:center; font-weight:700; font-size:15px; line-height:1.6;
     color:var(--gold); letter-spacing:.05em; transition:opacity .4s ease;
@@ -404,9 +413,11 @@
   }
   .magic-skip.show{ opacity:.8; pointer-events:auto; }
 
-  /* ---------- 寬螢幕：左右分割（左＝插畫，右＝內容） ---------- */
+  /* ---------- 寬螢幕：左右分割（左＝插畫，右＝內容） ----------
+     視窗「寬 ≥ 高」（橫的）就用；直式視窗（手機、直立的平板）用手機版。
+     下面的 @media (min-aspect-ratio:1/1)、JS 裡的 wideQuery 要保持一致 */
   @media (min-aspect-ratio:1/1){
-    :root{ --art-ratio:.72; --art-w:min(60vw, calc(100dvh * var(--art-ratio))); }  /* 比 9:16(.5625) 寬 → 插畫放大，下方沒圖案的部分會被裁掉；數字越大裁越多 */
+    :root{ --art-ratio:.88; --art-w:min(56vw, calc(100dvh * var(--art-ratio))); }  /* 插畫區寬度 = 視窗高度 × 這個數字（9:16 原始是 .5625）；越大 → 插畫區越寬、圖越放大、下方空白裁越多 */
     .starfield{ display:block; }
     .media-wrap{ right:auto; width:var(--art-w); }
     .media-wrap img, .media-wrap video{ object-position:center top; }
@@ -414,13 +425,17 @@
     .res-wide{ display:flex; }
     .start-overlay, .quiz-overlay{ left:var(--art-w); }
     .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
-    .start-overlay{ justify-content:center; }
-    .quiz-overlay{ justify-content:center; }
-    .quiz-overlay > .progress-wrap{ margin-bottom:36px; }
+    .start-overlay{ justify-content:flex-start; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; padding:24px 0; }
+    .start-overlay > .start-text{ margin-top:auto; }
+    .start-overlay > .start-cta{ margin-bottom:auto; }
+    .quiz-overlay{ justify-content:flex-start; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; }
+    .quiz-overlay > .progress-wrap{ margin-top:auto; }
+    .quiz-overlay > .options{ margin-bottom:auto; }
+    .quiz-overlay > .progress-wrap{ margin-bottom:clamp(72px, 13vh, 140px); }
     .q-body{ flex:none; }
   }
 
-  /* ---------- 寬螢幕（平板/桌面）：文字與按鈕放大一點 ---------- */
+  /* ---------- 平板／桌面（寬 ≥ 768px）：文字與按鈕放大一點 ---------- */
   @media (min-width:768px){
     h1.title{ font-size:34px; }
     .lede-quote, .lede, .lede2{ font-size:15px; }
@@ -432,8 +447,36 @@
     .btn-ghost, .btn-share{ font-size:13px; padding:8px 20px; }
   }
 
+  /* ---------- 寬螢幕首頁：文字排版（拉開間距、整組上下置中、依序淡入） ---------- */
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
+  @media (min-aspect-ratio:1/1){
+    .start-text{ max-width:600px; padding:0 clamp(20px, 4vw, 48px); }
+    h1.title{ font-size:38px; letter-spacing:.06em; line-height:1.3; margin-bottom:clamp(22px, 4.5vh, 40px); }
+    h1.title .line2{ margin-top:10px; }
+    .quote-block{ max-width:440px; margin-bottom:clamp(26px, 5vh, 48px); }
+    .wave-line{ width:240px; }
+    .lede-quote, .lede, .lede2{ font-size:clamp(15px, 2.3vh, 19px); line-height:1.95; letter-spacing:.04em; }
+    .lede-quote{ margin:16px 0; }
+    .lede{ max-width:none; margin-bottom:clamp(12px, 2.4vh, 22px); }
+    .lede2{ max-width:none; color:var(--parchment-dim); }
+    .start-cta{ max-width:600px; padding:clamp(30px, 6vh, 56px) clamp(20px, 4vw, 48px) 0; }
+    .btn-primary{ font-size:17px; padding:16px clamp(28px, 4vw, 56px); letter-spacing:.08em; }
+    .start-text > *, .start-cta > *{ animation:riseIn .9s ease both; }
+    .start-text > :nth-child(1){ animation-delay:.1s; }
+    .start-text > :nth-child(2){ animation-delay:.35s; }
+    .start-text > :nth-child(3){ animation-delay:.6s; }
+    .start-text > :nth-child(4){ animation-delay:.8s; }
+    .start-cta > *{ animation-delay:1.05s; }
+  }
+
+  /* 橫向但很窄的視窗：右側變得很窄，選項改成可以換行，不要被「…」截掉 */
+  @media (min-aspect-ratio:1/1) and (max-width:700px){
+    .opt-btn{ white-space:normal; text-overflow:clip; }
+  }
+
   @media (prefers-reduced-motion:reduce){
     .screen{ transition:none; }
+    .start-text > *, .start-cta > *{ animation:none; }
     .fleck, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:none; }
   }
 </style>
@@ -447,7 +490,7 @@
   </defs>
 </svg>
 
-<div class="app-shell">
+<div class="app-shell on-start">
   <div class="starfield" id="starfield"></div>
   <div class="screen-stack">
 
@@ -790,6 +833,7 @@
   var shell = document.querySelector('.app-shell');
   function showScreen(name){
     Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
+    shell.classList.toggle('on-start', name === 'start');
     shell.classList.toggle('on-result', name === 'result');
   }
 
@@ -1159,6 +1203,7 @@
     }).join('');
   }
 
+  /* 要跟 CSS 裡「寬螢幕：左右分割」的 @media 條件一致 */
   var wideQuery = window.matchMedia ? window.matchMedia('(min-aspect-ratio: 1/1)') : null;
   function isWide(){ return !!(wideQuery && wideQuery.matches); }
 
