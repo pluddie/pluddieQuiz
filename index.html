@@ -18,6 +18,7 @@
     --block-bg:#225772;
     --forest-rgb:8,47,50;   /* 首頁用的深綠：量測自首頁 mp4 畫面下方的深色（截圖是 P3 色域，已換算成 sRGB #082f32） */
     --forest:rgb(var(--forest-rgb));
+    --btn-teal:#226f66;     /* 首頁按鈕：跟深綠背景搭的藍綠色 */
 
     --stripes:repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 12px, rgba(255,255,255,.015) 12px 24px);   /* 圖片還沒放時的斜紋佔位 */
   }
@@ -37,7 +38,7 @@
     -webkit-user-drag:none; -webkit-touch-callout:none;
     -webkit-user-select:none; user-select:none;
   }
-  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ pointer-events:none; }
+  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ pointer-events:none; }
 
   body{
     height:100dvh;
@@ -53,7 +54,6 @@
     position:relative;
     width:100%; height:100dvh;
     display:flex; flex-direction:column;
-    background:var(--bg-deep);
     overflow:hidden;
   }
 
@@ -78,7 +78,7 @@
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   }
   @keyframes mediaIn{ from{ opacity:0; } to{ opacity:1; } }
-  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
+  .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
   #hero-media-wrap{ background:var(--forest); }
   .media-placeholder{
     position:absolute; inset:0;
@@ -91,7 +91,7 @@
     background:var(--night);
   }
   .app-shell.on-start .starfield{ background:var(--forest); }       /* 首頁（寬螢幕右側）改成跟 mp4 接得起來的深綠 */
-  .app-shell.on-result .starfield{ display:block; }     /* 手機結果頁也顯示星空（深藍底＋光點） */
+  .app-shell.on-sky .starfield{ display:block; }        /* 手機的「點亮魔法」和結果頁也顯示星空（深藍底＋光點） */
   .fleck{
     position:absolute; left:var(--x); bottom:-12px; width:var(--s); height:var(--s);
     border-radius:50%; background:var(--gold); box-shadow:0 0 8px 2px rgba(245,231,166,.55);
@@ -134,7 +134,7 @@
     font-size:clamp(23px, 4.4vh, 30px); line-height:1.34; margin:0 0 14px;
     color:var(--title-teal);
   }
-  h1.title .line2{ font-weight:900; margin-top:4px; }
+  h1.title .line2{ margin-top:4px; }
   .quote-block{ margin:0 auto 20px; max-width:280px; }
   .wave-line{ display:block; width:170px; height:9px; margin:0 auto; opacity:.55; }
   .lede-quote, .lede, .lede2{ font-size:13px; line-height:1.5; color:#ffffff; font-weight:500; }
@@ -145,11 +145,11 @@
     position:relative; z-index:1;
     flex-shrink:0; display:flex; flex-direction:column; align-items:center;
     width:100%; max-width:480px;
-    padding:18px 26px calc(30px + env(safe-area-inset-bottom));
+    padding:18px 26px calc(64px + env(safe-area-inset-bottom));
   }
   .btn-primary{
     font-weight:700; font-size:14px;
-    color:var(--parchment); background:var(--block-bg);
+    color:var(--parchment); background:var(--btn-teal);
     border:none; border-radius:999px; padding:11px 36px;
     cursor:pointer; letter-spacing:.03em;
     transition:transform .15s ease, background-color .9s ease, color .9s ease;
@@ -167,7 +167,7 @@
   .quiz-overlay{
     position:absolute; inset:0; z-index:1;
     display:flex; flex-direction:column; align-items:center;
-    padding:calc(18px + env(safe-area-inset-top)) 20px calc(22px + env(safe-area-inset-bottom));
+    padding:calc(18px + env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
   }
   .quiz-overlay > .progress-wrap,
   .quiz-overlay > .q-body,
@@ -207,13 +207,11 @@
     transform:translate(-50%,-50%); transition:opacity .3s ease, transform .3s ease;
   }
   .progress-star.todo{ opacity:.4; }
-  .progress-star.done{ opacity:1; }
   .progress-star.now{ opacity:1; transform:translate(-50%,-50%) scale(1.35); filter:drop-shadow(0 0 5px rgba(227,174,83,.85)); }
 
   .q-body{
     position:relative; z-index:1;
     flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-end;
-    align-items:stretch;
     padding:10px 0 0;
   }
   .q-text{
@@ -222,7 +220,6 @@
     color:var(--parchment);
     text-shadow:0 2px 14px rgba(0,0,0,.4);
     text-align:left;
-    width:100%;
     margin:0;
   }
   .options{
@@ -260,7 +257,7 @@
     perspective:1100px; touch-action:none;
   }
   .rc-tilt{
-    width:min(88vw, calc((100dvh - 200px) * var(--rc-ratio, .5625)));
+    width:min(88vw, calc((100dvh - 240px) * var(--rc-ratio, .5625)));
     aspect-ratio:var(--rc-ratio, .5625);
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
@@ -289,31 +286,50 @@
   /* 角色名片內容：手機卡片背面、電腦版左側卡片共用（上方是圖＋文字，只有頁尾固定在卡片最下面） */
   .card-art{
     position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-    gap:8px; padding:7% 8% 5%; text-align:center; color:var(--parchment);
+    gap:8px; padding:4.5% 8% 5%; text-align:center; color:var(--parchment);
   }
-  .ca-eyebrow{ font-size:12px; letter-spacing:.06em; color:var(--parchment-dim); }
+  .ca-eyebrow{ font-size:12px; line-height:1.6; letter-spacing:.06em; color:var(--parchment-dim); }
   .ca-lion{ flex:0 1 auto; min-height:0; width:100%; margin-bottom:-4px; display:flex; align-items:center; justify-content:center; }
-  .ca-lion img{
+  .ca-lion.trimmed{ margin-bottom:0; }
+  .ca-lion:not(.trimmed) img{ transform:scale(1.15); transform-origin:center bottom; }   /* 讀不到圖片像素時的備援：直接放大一點 */
+  .ca-lion img, .ca-lion canvas{
     max-width:100%; max-height:100%; width:auto; height:auto; display:block;
     filter:drop-shadow(0 12px 18px rgba(0,0,0,.35));
   }
   .ca-name{ font-weight:900; font-size:30px; line-height:1.25; color:var(--gold); }
   .ca-tagline{ font-size:13px; line-height:1.7; }
-  .ca-tags{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; }
+  .ca-tags{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:8px; }
   .ca-tags span{ font-size:11px; padding:3px 10px; border-radius:999px; background:var(--parchment); color:var(--bg-deep); font-weight:700; }
   .ca-rarity{ font-size:12px; font-weight:700; color:var(--gold); }
-  .ca-foot{ margin-top:auto; padding-top:6px; font-size:10px; letter-spacing:.08em; color:var(--parchment-dim); }
+  .ca-foot{ margin-top:auto; padding-top:14px; font-size:10px; line-height:1.6; letter-spacing:.08em; color:var(--parchment-dim); }
+  .ca-spark{ position:absolute; pointer-events:none; animation:twinkle 3.4s ease-in-out infinite; }
+  .ca-spark.s1{ top:13%; left:9%;  width:18px; }
+  .ca-spark.s2{ top:24%; right:8%; width:12px; animation-delay:1.1s; }
+  .ca-spark.s3{ top:47%; left:6%;  width:11px; animation-delay:2s; }
+  .ca-spark.s4{ top:57%; right:9%; width:16px; animation-delay:.6s; }
+  .ca-spark.s5{ top:35%; right:15%; width:8px; animation-delay:1.7s; }
+  @keyframes twinkle{ 0%,100%{ opacity:.35; transform:scale(.8); } 50%{ opacity:1; transform:scale(1.1); } }
+
+  .rc-flip{
+    align-self:center; flex-shrink:0; display:flex; align-items:center; gap:6px;
+    background:none; border:none; padding:8px 14px; cursor:pointer;
+    font-size:12px; letter-spacing:.08em; color:var(--parchment);
+    transition:color .25s ease, transform .12s;
+  }
+  .rc-flip svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .rc-flip:hover{ color:var(--gold); }
+  .rc-flip:active{ transform:scale(.96); }
 
   #res-sparkle{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:5; }
 
   /* ---------- 結果頁（寬螢幕版）：左＝角色卡片（不翻轉），右＝各區塊 ---------- */
   .res-wide{ display:none; flex:1; min-height:0; }
   .rw-stage{
-    flex:1 1 44%; min-width:0;
+    flex:1 1 44%; min-width:0; padding:0 clamp(16px, 3vw, 48px);
     display:flex; align-items:center; justify-content:center; touch-action:none; perspective:1100px;
   }
   .rw-card{
-    position:relative; height:min(84dvh, 780px); aspect-ratio:5/8;
+    position:relative; width:min(100%, calc(min(84dvh, 780px) * .625)); aspect-ratio:5/8;   /* 高度最多 84% 視窗高，窄的時候寬度跟著縮，兩側的留白不會被吃掉 */
     border-radius:22px; overflow:hidden; box-shadow:0 18px 40px rgba(0,0,0,.4);
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     transition:transform .25s ease-out;
@@ -332,7 +348,7 @@
   .rw-panel{
     flex:1 1 56%; min-width:0; max-width:700px;
     display:flex; flex-direction:column; gap:14px;
-    padding:clamp(18px, 4vh, 44px) clamp(40px, 8vw, 140px) clamp(12px, 2vh, 24px) 0;
+    padding:clamp(18px, 4vh, 44px) clamp(40px, 8vw, 140px) clamp(12px, 2vh, 24px) clamp(20px, 3vw, 48px);
     overflow-y:auto; scrollbar-width:thin;
   }
   /* 內容不夠高時上下置中；太高時從最上面開始、可以往下捲（用 justify-content:center 會把最上面切掉） */
@@ -364,9 +380,9 @@
   .rw-rel-pair{ display:flex; justify-content:center; gap:10px; }
   .rw-rel-item{ flex:1; min-width:0; text-align:center; transition:transform .3s ease; }
   .rw-rel-item:hover{ transform:translateY(-6px); }
-  .rw-rel-thumb{ height:clamp(104px, 17vh, 170px); display:flex; align-items:center; justify-content:center; }
-  .rw-rel-thumb img{ max-width:100%; max-height:100%; width:auto; height:auto; display:block; }
-  .rw-rel-name{ margin-top:6px; font-size:12px; font-weight:700; color:var(--parchment); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rw-rel-thumb{ height:clamp(130px, 22vh, 220px); display:flex; align-items:center; justify-content:center; }
+  .rw-rel-thumb img{ max-width:100%; max-height:100%; width:auto; height:auto; display:block; transform:scale(1.35); }   /* 圖本身四周有透明留白，放大 1.35 倍讓角色看起來夠大 */
+  .rw-rel-name{ margin-top:12px; font-size:12px; font-weight:700; color:var(--parchment); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
   .res-actions{
     position:relative; z-index:6; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:12px;
@@ -382,7 +398,6 @@
   .btn-ghost:active, .btn-share:active{ transform:scale(.96); }
 
   /* ---------- 點亮魔法：滑動塗色，把花花獅輪廓點亮 ---------- */
-  #screen-magic{ background:radial-gradient(60% 45% at 50% 46%, rgba(91,224,255,.16), transparent 72%); }
   .magic-inner{
     flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto;
     gap:20px; padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
@@ -391,7 +406,7 @@
   .magic-inner > :last-child{ margin-bottom:auto; }
   .magic-title{
     margin:0; text-align:center; font-weight:700; font-size:15px; line-height:1.6;
-    color:var(--gold); letter-spacing:.05em; transition:opacity .4s ease;
+    color:var(--gold); letter-spacing:.05em;
   }
   .magic-stage{
     position:relative; aspect-ratio:var(--magic-ratio, 1);
@@ -413,28 +428,6 @@
   }
   .magic-skip.show{ opacity:.8; pointer-events:auto; }
 
-  /* ---------- 寬螢幕：左右分割（左＝插畫，右＝內容） ----------
-     視窗「寬 ≥ 高」（橫的）就用；直式視窗（手機、直立的平板）用手機版。
-     下面的 @media (min-aspect-ratio:1/1)、JS 裡的 wideQuery 要保持一致 */
-  @media (min-aspect-ratio:1/1){
-    :root{ --art-ratio:.88; --art-w:min(56vw, calc(100dvh * var(--art-ratio))); }  /* 插畫區寬度 = 視窗高度 × 這個數字（9:16 原始是 .5625）；越大 → 插畫區越寬、圖越放大、下方空白裁越多 */
-    .starfield{ display:block; }
-    .media-wrap{ right:auto; width:var(--art-w); }
-    .media-wrap img, .media-wrap video{ object-position:center top; }
-    .res-card-wrap, .res-actions--bar{ display:none; }
-    .res-wide{ display:flex; }
-    .start-overlay, .quiz-overlay{ left:var(--art-w); }
-    .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
-    .start-overlay{ justify-content:flex-start; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; padding:24px 0; }
-    .start-overlay > .start-text{ margin-top:auto; }
-    .start-overlay > .start-cta{ margin-bottom:auto; }
-    .quiz-overlay{ justify-content:flex-start; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; }
-    .quiz-overlay > .progress-wrap{ margin-top:auto; }
-    .quiz-overlay > .options{ margin-bottom:auto; }
-    .quiz-overlay > .progress-wrap{ margin-bottom:clamp(72px, 13vh, 140px); }
-    .q-body{ flex:none; }
-  }
-
   /* ---------- 平板／桌面（寬 ≥ 768px）：文字與按鈕放大一點 ---------- */
   @media (min-width:768px){
     h1.title{ font-size:34px; }
@@ -447,9 +440,30 @@
     .btn-ghost, .btn-share{ font-size:13px; padding:8px 20px; }
   }
 
-  /* ---------- 寬螢幕首頁：文字排版（拉開間距、整組上下置中、依序淡入） ---------- */
+  /* ---------- 寬螢幕：左右分割（左＝插畫，右＝內容） ----------
+     視窗「寬 ≥ 高」（橫的）就用；直式視窗（手機、直立的平板）用手機版。
+     這個 @media 條件、JS 裡的 wideQuery 要保持一致。放在 768px 那段後面，字級才會以這裡為準 */
   @keyframes riseIn{ from{ opacity:0; transform:translateY(16px); } to{ opacity:1; transform:none; } }
   @media (min-aspect-ratio:1/1){
+    :root{ --art-ratio:.88; --art-w:min(56vw, calc(100dvh * var(--art-ratio))); }  /* 插畫區寬度 = 視窗高度 × 這個數字（9:16 原始是 .5625）；越大 → 插畫區越寬、圖越放大、下方空白裁越多 */
+    .starfield{ display:block; }
+    .media-wrap{ right:auto; width:var(--art-w); }
+    .media-wrap img, .media-wrap video{ object-position:center top; }
+    .res-card-wrap, .rc-flip, .res-actions--bar{ display:none; }
+    .res-wide{ display:flex; }
+    .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
+    .q-body{ flex:none; }
+
+    /* 右側內容欄（首頁、題目）：內容不夠高時上下置中；太高時從最上面開始、可以往下捲，不會被切掉 */
+    .start-overlay, .quiz-overlay{ left:var(--art-w); justify-content:flex-start; overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; }
+    .start-overlay{ padding:24px 0; }
+    .start-overlay > .start-text{ margin-top:auto; }
+    .start-overlay > .start-cta{ margin-bottom:auto; }
+    .quiz-overlay{ padding-top:24px; padding-bottom:24px; }
+    .quiz-overlay > .progress-wrap{ margin-top:auto; margin-bottom:clamp(72px, 13vh, 140px); }
+    .quiz-overlay > .options{ margin-bottom:auto; }
+
+    /* 首頁文字：拉開間距、整組上下置中、依序淡入 */
     .start-text{ max-width:600px; padding:0 clamp(20px, 4vw, 48px); }
     h1.title{ font-size:38px; letter-spacing:.06em; line-height:1.3; margin-bottom:clamp(22px, 4.5vh, 40px); }
     h1.title .line2{ margin-top:10px; }
@@ -477,7 +491,7 @@
   @media (prefers-reduced-motion:reduce){
     .screen{ transition:none; }
     .start-text > *, .start-cta > *{ animation:none; }
-    .fleck, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .rw-rel-thumb img{ animation:none; }
+    .fleck, .ca-spark, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:none; }
   }
 </style>
 </head>
@@ -612,9 +626,13 @@
         </div>
       </div>
 
+      <button class="rc-flip js-flip">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.5-5.8L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.5 5.8L4 15.5"/><path d="M4 20v-4.5h4.5"/></svg>
+        翻轉卡片
+      </button>
+
       <canvas id="res-sparkle"></canvas>
       <div class="res-actions res-actions--bar">
-        <button class="btn-ghost js-flip">翻轉卡片</button>
         <button class="btn-ghost js-restart">再測一次</button>
         <button class="btn-share js-save">領取魔法獅檔案</button>
       </div>
@@ -818,10 +836,12 @@
   var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   /* ---------------- 狀態 ---------------- */
-  var idx = 0;
-  var scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
-  var answers = [];
-  var currentResult = null;
+  var idx, scores, answers, currentResult = null;
+  function resetQuiz(){
+    idx = 0; answers = [];
+    scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+  }
+  resetQuiz();
 
   /* ---------------- DOM ---------------- */
   var screens = {
@@ -834,7 +854,7 @@
   function showScreen(name){
     Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
     shell.classList.toggle('on-start', name === 'start');
-    shell.classList.toggle('on-result', name === 'result');
+    shell.classList.toggle('on-sky', name === 'magic' || name === 'result');
   }
 
   /* ---------------- 直線＋星星進度條 ---------------- */
@@ -950,8 +970,8 @@
   }
 
   /* ---------------- 點亮魔法：Q8 之後，滑動塗色點亮花花獅輪廓，再進入結果頁 ---------------- */
-  /* 結果在點亮魔法開始時就先算好，這樣使用者塗色的同時，結果頁的圖片就已經在背景載入了 */
   function finishQuiz(){
+    magicWaiting = false;
     showScreen('result');
     revealStats();
   }
@@ -965,44 +985,20 @@
   var MAGIC_DONE_AT = 0.8;      /* 點亮到 80% 就算完成 */
   var magic = null;             /* 目前這一輪的狀態 */
   var magicTimers = [];
-  var magicImg = null;          /* img/magic-lion.png（去背的魔法獅角色），載入成功才會有 */
-  var magicFallback = null;     /* 沒放角色圖時，改用程式畫的簡易獅頭 */
+  var magicImg = null;          /* img/magic-lion.png（去背的魔法獅角色） */
+  var magicState = 'loading';   /* loading → ready / missing。沒有角色圖就不進這一關，不會出現任何預設的獅子 */
+  var magicWaiting = false;     /* 使用者已經到了這一關，但角色圖還在載入 */
 
   (function preloadMagicLion(){
     var img = new Image();
-    img.addEventListener('load', function(){ magicImg = img; });
+    img.addEventListener('load', function(){ magicImg = img; magicState = 'ready'; if(magicWaiting) beginMagic(); });
+    img.addEventListener('error', function(){ magicState = 'missing'; if(magicWaiting) finishQuiz(); });
     img.src = 'img/magic-lion.png';
   })();
 
-  /* 備援：沒有 magic-lion.png 時，程式自己畫一隻獅頭（顏色比照角色：橘鬃毛、奶黃臉、粉頰） */
-  function makeFallbackLion(){
-    var cv = document.createElement('canvas'); cv.width = cv.height = 600;
-    var x = cv.getContext('2d'), cx = 300, cy = 320, R = 200;
-    function disc(px, py, r, fill){ x.fillStyle = fill; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill(); }
-    [-1, 1].forEach(function(side){
-      var a = -Math.PI / 2 + side * 0.74, ex = cx + Math.cos(a) * R * 0.98, ey = cy + Math.sin(a) * R * 0.98;
-      disc(ex, ey, R * 0.3, '#c76a3a'); disc(ex, ey, R * 0.15, '#f0a58f');
-    });
-    x.fillStyle = '#c76a3a'; x.beginPath();
-    for(var i = 0; i <= 180; i++){
-      var th = (i / 180) * Math.PI * 2, r = R * (0.9 + 0.1 * Math.abs(Math.sin(7 * th)));
-      var px = cx + Math.cos(th) * r, py = cy + Math.sin(th) * r;
-      if(i === 0) x.moveTo(px, py); else x.lineTo(px, py);
-    }
-    x.fill();
-    disc(cx, cy + R * 0.04, R * 0.62, '#fdf3a6');
-    [-1, 1].forEach(function(side){
-      disc(cx + side * R * 0.4, cy + R * 0.14, R * 0.12, '#eba096');
-      disc(cx + side * R * 0.22, cy - R * 0.06, R * 0.05, '#12303f');
-    });
-    x.fillStyle = '#12303f'; x.beginPath();
-    x.moveTo(cx - R * 0.07, cy + R * 0.12); x.lineTo(cx + R * 0.07, cy + R * 0.12); x.lineTo(cx, cy + R * 0.2); x.fill();
-    return cv;
-  }
-
-  /* 依角色圖的透明區域，準備：暗色剪影、金色外框、可塗色的格點。完全不需要另外畫輪廓 */
+  /* 依角色圖的透明區域，準備：暗色剪影、淺黃色外框、可塗色的格點。完全不需要另外畫輪廓 */
   function setupMagic(){
-    var src = magicImg || (magicFallback = magicFallback || makeFallbackLion());
+    var src = magicImg;
     var ratio = src.width / src.height;
     magicStage.style.setProperty('--magic-ratio', ratio);
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1021,12 +1017,12 @@
     var colorCv = layer(), cc = colorCv.getContext('2d');
     cc.drawImage(src, (cw - src.width * k) / 2, (ch - src.height * k) / 2, src.width * k, src.height * k);
 
-    /* 金色外框：把金色剪影往 12 個方向各偏一點點疊出外圈，再挖掉角色本體 */
-    var gold = tinted(colorCv, '#f5e7a6'), ring = layer(), rc = ring.getContext('2d'), off = 3 * dpr;
-    for(var a = 0; a < 12; a++){ rc.drawImage(gold, Math.cos(a * Math.PI / 6) * off, Math.sin(a * Math.PI / 6) * off); }
+    /* 淺黃色外框：把剪影往 12 個方向各偏一點點疊出外圈，再挖掉角色本體（偏移越小線條越細） */
+    var edge = tinted(colorCv, '#f5e7a6'), ring = layer(), rc = ring.getContext('2d'), off = 1.8 * dpr;
+    for(var a = 0; a < 12; a++){ rc.drawImage(edge, Math.cos(a * Math.PI / 6) * off, Math.sin(a * Math.PI / 6) * off); }
     rc.globalCompositeOperation = 'destination-out'; rc.drawImage(colorCv, 0, 0);
     var lc = lineCv.getContext('2d');
-    lc.shadowColor = 'rgba(245,231,166,.8)'; lc.shadowBlur = 12 * dpr; lc.drawImage(ring, 0, 0);
+    lc.shadowColor = 'rgba(245,231,166,.7)'; lc.shadowBlur = 9 * dpr; lc.drawImage(ring, 0, 0);
 
     var pc = paintCv.getContext('2d');
     pc.drawImage(tinted(colorCv, 'rgba(8,28,40,.6)'), 0, 0);
@@ -1089,17 +1085,27 @@
     magicTimers.push(setTimeout(finishQuiz, 1400));
   }
 
-  function startMagic(){
+  function beginMagic(){
+    magicWaiting = false;
     magicTimers.forEach(clearTimeout); magicTimers = [];
-    magicStage.classList.remove('done');
-    magicSkip.classList.remove('show');
-    magicTitle.innerHTML = '用手指在花花獅上滑動<br>點亮牠的魔法';
-    showScreen('magic');
-    computeResult();
-    magic = null;
     setupMagic();
     /* 萬一畫布沒準備好（magic 是 null），「直接揭曉」馬上出現，避免使用者卡住 */
     magicTimers.push(setTimeout(function(){ magicSkip.classList.add('show'); }, magic ? 6000 : 0));
+  }
+
+  function startMagic(){
+    magicTimers.forEach(clearTimeout); magicTimers = [];
+    computeResult();      /* 結果在這裡就先算好，使用者塗色的同時，結果頁的圖片就已經在背景載入了 */
+    if(magicState === 'missing'){ finishQuiz(); return; }      /* 沒有角色圖：略過這一關，直接進結果頁 */
+    magicStage.classList.remove('done');
+    magicSkip.classList.remove('show');
+    magicTitle.innerHTML = '用手指在花花獅上滑動<br>點亮牠的魔法';
+    magic = null;
+    showScreen('magic');
+    if(magicState === 'ready'){ beginMagic(); return; }
+    /* 角色圖還在載入：先顯示這一頁，圖到了再開始；等超過 8 秒就直接進結果頁 */
+    magicWaiting = true;
+    magicTimers.push(setTimeout(function(){ if(magicWaiting) finishQuiz(); }, 8000));
   }
 
   function magicXY(e){
@@ -1145,12 +1151,8 @@
     var bestKey = null, bestDist = Infinity;
     Object.keys(LIONS).forEach(function(k){
       var s = LIONS[k].stats;
-      var d = Math.sqrt(
-        Math.pow(coord.social - s.social, 2) +
-        Math.pow(coord.action - s.action, 2) +
-        Math.pow(coord.imagination - s.imagination, 2) +
-        Math.pow(coord.adventure - s.adventure, 2)
-      );
+      var d = Math.hypot(coord.social - s.social, coord.action - s.action,
+                         coord.imagination - s.imagination, coord.adventure - s.adventure);
       if(d < bestDist){ bestDist = d; bestKey = k; }
     });
 
@@ -1162,31 +1164,59 @@
   var NAME_TO_KEY = {};
   Object.keys(LIONS).forEach(function(k){ NAME_TO_KEY[LIONS[k].name] = k; });
 
-  /* 角色去背圖（寬螢幕版的主角與共鳴/異頻縮圖用）：lion-{key}.png / .webp / .gif，或 result-{key}.png。
-     載入成功才放進去，沒有就維持斜紋佔位 */
-  function loadLionPng(box, key, name){
+  /* 把角色圖四周的透明留白裁掉，回傳裁好的 canvas（這樣角色可以放得更大，也會緊貼著下面的名字）。
+     直接雙擊 html（file://）開啟時瀏覽器不准讀圖片像素，這時回傳 null，改用原圖。 */
+  function trimTransparent(img){
+    try{
+      var s = Math.min(1, 240 / Math.max(img.naturalWidth, img.naturalHeight));
+      var w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+      var probe = document.createElement('canvas'); probe.width = w; probe.height = h;
+      var pc = probe.getContext('2d'); pc.drawImage(img, 0, 0, w, h);
+      var d = pc.getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for(var y = 0; y < h; y++){
+        for(var x = 0; x < w; x++){
+          if(d[(y * w + x) * 4 + 3] > 16){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+        }
+      }
+      if(x1 < 0) return null;
+      var pad = 2, sx = Math.max(0, Math.floor(x0 / s) - pad), sy = Math.max(0, Math.floor(y0 / s) - pad);
+      var ex = Math.min(img.naturalWidth, Math.ceil((x1 + 1) / s) + pad), ey = Math.min(img.naturalHeight, Math.ceil((y1 + 1) / s) + pad);
+      var out = document.createElement('canvas'); out.width = ex - sx; out.height = ey - sy;
+      out.getContext('2d').drawImage(img, sx, sy, out.width, out.height, 0, 0, out.width, out.height);
+      return out;
+    }catch(err){ return null; }
+  }
+
+  /* 角色去背圖（卡片上的主角、共鳴/異頻縮圖）：lion-{key}.png / .webp / .gif，或 result-{key}.png。
+     載入成功才放進去，沒有就維持斜紋佔位；trim 為 true 時先裁掉四周的透明留白 */
+  function loadLionPng(box, key, name, trim){
     box.innerHTML = '';
     box.classList.add('empty');
     var urls = ['png', 'webp', 'gif'].map(function(e){ return 'img/lion-' + key + '.' + e; });
     urls.push('img/result-' + key + '.png');
     findImage(urls, function(img){
       if(!img) return;
-      img.alt = name;
+      var el = (trim && trimTransparent(img)) || img;
+      if(el !== img){ el.setAttribute('role', 'img'); el.setAttribute('aria-label', name); box.classList.add('trimmed'); }
+      else { img.alt = name; box.classList.remove('trimmed'); }
       box.classList.remove('empty');
-      box.appendChild(img);
+      box.appendChild(el);
     });
   }
 
   /* 角色名片內容（手機卡片背面、電腦版左側卡片共用）：開場句、角色圖、名字、標語、hashtag、稀有度、頁尾 */
   function fillCardArt(el, key, lion){
     el.innerHTML =
-      '<div class="ca-eyebrow">你感受到魔法正在甦醒 你成為了一隻…</div><div class="ca-lion"></div>' +
+      '<div class="ca-eyebrow">你感受到魔法正在甦醒<br>你成為了一隻…</div><div class="ca-lion"></div>' +
       '<div class="ca-name">' + lion.name + '</div>' +
       '<div class="ca-tagline">' + lion.tagline.join('<br>') + '</div>' +
       '<div class="ca-tags">' + lion.tags.map(function(t){ return '<span>#' + t + '</span>'; }).join('') + '</div>' +
       '<div class="ca-rarity">稀有度 ' + lion.rarity + '%</div>' +
-      '<div class="ca-foot">小女孩和花花獅工作室 © PLUDDIE STUDIO</div>';
-    loadLionPng(el.querySelector('.ca-lion'), key, lion.name);
+      '<div class="ca-foot">小女孩和花花獅工作室<br>© PLUDDIE STUDIO</div>' +
+      [1, 2, 3, 4, 5].map(function(n){
+        return '<svg class="ca-spark s' + n + '" viewBox="0 0 24 24"><use href="#sparkleShape" fill="#fff"/></svg>';
+      }).join('');
+    loadLionPng(el.querySelector('.ca-lion'), key, lion.name, true);
   }
 
   /* 結果頁出現後，才把魔法能量數值條拉到定位，才看得到慢慢長出來的動畫 */
@@ -1371,7 +1401,7 @@
 
   /* ---------------- 事件 ---------------- */
   document.getElementById('btn-start').addEventListener('click', function(){
-    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    resetQuiz();
     var content = document.getElementById('quiz-content');
     content.classList.add('fading');
     showScreen('quiz');
@@ -1380,7 +1410,7 @@
   document.getElementById('btn-back').addEventListener('click', goBack);
 
   bindAll('.js-restart', function(){
-    idx = 0; answers = []; scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
+    resetQuiz();
     showScreen('start');
   });
 
