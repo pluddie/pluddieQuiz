@@ -102,13 +102,17 @@
   .rw-panel::-webkit-scrollbar-thumb,
   .magic-inner::-webkit-scrollbar-thumb{ background:var(--block-bg); border-radius:6px; }
 
-  /* 漂浮星空（只在寬螢幕的右側/空白處出現） */
+  /* 背景顏色層（寬螢幕的右側、以及「點亮魔法」頁和結果頁才顯示；漂浮光點是下面另一層 .flecks） */
   .starfield{
     position:absolute; inset:0; z-index:0; display:none; pointer-events:none;
     background:var(--night);
   }
   .app-shell.on-start .starfield{ background:var(--forest); }       /* 首頁（寬螢幕右側）改成跟 mp4 接得起來的深綠 */
   .app-shell.on-sky .starfield{ display:block; background:var(--black); }   /* 「點亮魔法」頁和結果頁（手機、電腦都是）：黑底＋漂浮光點 */
+  /* 漂浮光點：整個畫面（含左邊的插畫）共用同一層，不分割。
+     首頁、題目頁飄在最前面；「點亮魔法」頁和結果頁飄在背景裡（卡片後面） */
+  .flecks{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .app-shell.on-front .flecks{ z-index:6; }
   .fleck{
     position:absolute; left:var(--x); bottom:-12px; width:var(--s); height:var(--s);
     border-radius:50%; background:var(--gold); box-shadow:0 0 8px 2px rgba(245,231,166,.55);
@@ -148,21 +152,21 @@
   }
   h1.title{
     font-weight:900;
-    font-size:clamp(23px, 4.4vh, 30px); line-height:1.34; margin:0 0 14px;
+    font-size:clamp(23px, 4.4vh, 30px); line-height:1.34; margin:0 0 10px;
     color:var(--title-teal);
   }
   h1.title .line2{ margin-top:4px; }
-  .quote-block{ margin:0 auto 20px; max-width:280px; }
+  .quote-block{ margin:0 auto 12px; max-width:280px; }
   .wave-line{ display:block; width:170px; height:9px; margin:0 auto; opacity:.55; }
   .lede-quote, .lede, .lede2{ font-size:13px; line-height:1.5; color:#ffffff; font-weight:500; }
-  .lede-quote{ line-height:1.55; margin:8px 0; }
-  .lede{ max-width:300px; margin:0 auto 14px; }
+  .lede-quote{ line-height:1.55; margin:6px 0; }
+  .lede{ max-width:300px; margin:0 auto 10px; }
   .lede2{ max-width:280px; margin:0 auto; }
   .start-cta{
     position:relative; z-index:1;
     flex-shrink:0; display:flex; flex-direction:column; align-items:center;
     width:100%; max-width:480px;
-    padding:18px 26px calc(64px + env(safe-area-inset-bottom));
+    padding:14px 26px calc(50px + env(safe-area-inset-bottom));
   }
   .btn-primary{
     font-weight:700; font-size:14px;
@@ -250,7 +254,7 @@
     color:var(--parchment); background:var(--block-bg);
     border:none; border-radius:14px; min-height:44px;
     padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;
-    transition:transform .12s;
+    transition:transform .12s, opacity .4s ease;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .opt-btn::after{
@@ -262,6 +266,10 @@
     .opt-btn:hover::after{ opacity:.85; }
   }
   .opt-btn:active{ transform:scale(.97); }
+  /* 點下去之後：選到的那顆慢慢亮起藍綠色，其他的輕輕變淡，讓使用者知道選到哪一個 */
+  .opt-btn.chosen{ color:#fff; }
+  .opt-btn.chosen::after{ background:linear-gradient(90deg, #2a8a84, #3aa0b8); opacity:1; transition:opacity .5s ease; }
+  .options.has-choice .opt-btn:not(.chosen){ opacity:.5; }
   .opt-btn > *{ position:relative; z-index:1; }
   .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
 
@@ -540,8 +548,9 @@
   </defs>
 </svg>
 
-<div class="app-shell on-start">
-  <div class="starfield" id="starfield"></div>
+<div class="app-shell on-start on-front">
+  <div class="starfield"></div>
+  <div class="flecks" id="flecks"></div>
   <div class="screen-stack">
 
     <!-- 起始畫面 -->
@@ -730,9 +739,9 @@
     wrap.insertBefore(media, wrap.firstChild);
   }
 
-  /* ---------------- 漂浮星空（寬螢幕右側的背景，純裝飾） ---------------- */
-  (function initStarfield(){
-    var box = document.getElementById('starfield');
+  /* ---------------- 漂浮光點（純裝飾，整個畫面共用同一層） ---------------- */
+  (function initFlecks(){
+    var box = document.getElementById('flecks');
     for(var i = 0; i < 28; i++){
       var f = document.createElement('i');
       f.className = 'fleck';
@@ -883,7 +892,7 @@
   /* ---------------- 狀態 ---------------- */
   var idx, scores, answers, currentResult = null;
   function resetQuiz(){
-    idx = 0; answers = [];
+    idx = 0; answers = []; isTransitioning = false;
     scores = {light:0, moon:0, burst:0, sustain:0, fantasy:0, analysis:0, explore:0, guardian:0};
   }
   resetQuiz();
@@ -900,6 +909,7 @@
     Object.keys(screens).forEach(function(k){ screens[k].classList.toggle('active', k===name); });
     shell.classList.toggle('on-start', name === 'start');
     shell.classList.toggle('on-sky', name === 'magic' || name === 'result');
+    shell.classList.toggle('on-front', name === 'start' || name === 'quiz');
   }
 
   /* ---------------- 直線＋星星進度條 ---------------- */
@@ -967,11 +977,12 @@
     loadQuestionMedia(idx+1, done);
     qText.innerHTML = item.q;
     qOptions.innerHTML = '';
+    qOptions.classList.remove('has-choice');
     item.opts.forEach(function(o){
       var btn = document.createElement('button');
       btn.className = 'opt-btn';
       btn.innerHTML = '<span class="opt-glyph">'+OPTION_STAR_ICON+'</span><span>'+o.t+'</span>';
-      btn.addEventListener('click', function(){ pick(o.attrs); });
+      btn.addEventListener('click', function(){ pick(o.attrs, btn); });
       qOptions.appendChild(btn);
     });
   }
@@ -990,18 +1001,24 @@
     }, 220);
   }
 
-  function pick(attrs){
-    if(isTransitioning) return; /* 淡出動畫還沒跑完時，不理會重複點擊，避免計分/題目錯亂 */
+  var CHOICE_MS = 650;   /* 點下選項後，讓選到的那顆慢慢亮起來，停這麼久才換下一題 */
+
+  function pick(attrs, btn){
+    if(isTransitioning) return;           /* 亮色動畫、題目切換期間，不理會重複點擊，避免計分/題目錯亂 */
+    isTransitioning = true;
+    btn.classList.add('chosen');
+    qOptions.classList.add('has-choice');
+
     var prev = answers[idx];
     if(prev){ prev.forEach(function(a){ scores[a.attr] -= a.pts; }); }
     attrs.forEach(function(a){ scores[a.attr] += a.pts; });
     answers[idx] = attrs;
     idx++;
-    if(idx >= QUESTIONS.length){
-      startMagic();
-      return;
-    }
-    transitionToQuestion();
+
+    setTimeout(function(){
+      if(idx >= QUESTIONS.length){ isTransitioning = false; startMagic(); return; }
+      transitionToQuestion();             /* 淡出 → 換題 → 淡入，結束時會把 isTransitioning 放開 */
+    }, CHOICE_MS);
   }
 
   function goBack(){
