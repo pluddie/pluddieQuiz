@@ -20,6 +20,7 @@
     --forest:rgb(var(--forest-rgb));
     --btn-teal:#226f66;     /* 首頁按鈕：跟深綠背景搭的藍綠色 */
     --black:#000;           /* 「點亮魔法」頁、結果頁的背景，以及結果卡片的底色 */
+    --card-border:1.5px solid var(--gold);   /* 結果卡片的框線：手機正面、手機背面、電腦版卡片全部共用這一個 */
 
     --stripes:repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 12px, rgba(255,255,255,.015) 12px 24px);   /* 圖片還沒放時的斜紋佔位 */
   }
@@ -273,7 +274,8 @@
     perspective:1100px; touch-action:none;
   }
   .rc-tilt{
-    width:min(92vw, calc((100dvh - 160px) * var(--rc-ratio, .5625)));   /* 160px ＝ 下面的翻轉按鈕與兩顆按鈕所佔的高度，其餘都留給卡片 */
+    position:relative;
+    width:min(95vw, calc((100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--rc-ratio, .5625)));   /* 90px ＝ 下面兩顆按鈕所佔的高度加一點呼吸空間，其餘都留給卡片 */
     aspect-ratio:var(--rc-ratio, .5625);
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
@@ -296,9 +298,10 @@
   .rc-back{ transform:rotateY(180deg); }
   .rc-back, .rw-card{
     background:var(--black);
-    border:1px solid rgba(245,231,166,.45);
+    border:var(--card-border);
   }
-  .rc-back{ border:2px solid var(--gold); }   /* 手機卡片翻到背面：淺黃色的卡片框線（跟正面一樣） */
+  /* 手機卡片正面（你的結果圖）：框線畫在圖片上面，圖片不會被縮小，也不會融進黑色背景 */
+  .rc-front::after{ content:''; position:absolute; inset:0; border:var(--card-border); border-radius:inherit; pointer-events:none; z-index:2; }
 
   /* 角色名片內容：手機卡片背面、電腦版左側卡片共用（上方是圖＋文字，只有頁尾固定在卡片最下面） */
   .card-art{
@@ -329,15 +332,16 @@
   .ca-spark.s5{ top:35%; right:15%; width:8px; animation-delay:1.7s; }
   @keyframes twinkle{ 0%,100%{ opacity:.35; transform:scale(.8); } 50%{ opacity:1; transform:scale(1.1); } }
 
+  /* 翻轉卡片：卡片右上角的小圓形圖示（跟著卡片一起傾斜、浮動，但不會跟著翻到背面） */
   .rc-flip{
-    align-self:center; flex-shrink:0; display:flex; align-items:center; gap:6px;
-    background:none; border:none; padding:8px 14px; cursor:pointer;
-    font-size:12px; letter-spacing:.08em; color:var(--parchment);
-    transition:color .25s ease, transform .12s;
+    position:absolute; top:10px; right:10px; z-index:3; transform:translateZ(1px);
+    width:34px; height:34px; padding:0; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; border:1px solid rgba(245,231,166,.6); background:rgba(0,0,0,.5);
+    color:var(--gold); cursor:pointer; transition:background .25s ease, transform .12s;
   }
   .rc-flip svg{ width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
-  .rc-flip:hover{ color:var(--gold); }
-  .rc-flip:active{ transform:scale(.96); }
+  .rc-flip:hover{ background:rgba(245,231,166,.18); }
+  .rc-flip:active{ transform:translateZ(1px) scale(.92); }
 
   #res-sparkle{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:5; }
 
@@ -472,7 +476,7 @@
     .media-wrap{ right:auto; width:var(--art-w); }
     /* 圖的大小只看視窗高度，不會因為視窗變窄而縮小；插畫區比圖窄的時候，兩側（置中）被裁掉一點，而不是把圖縮小 */
     .media-wrap img, .media-wrap video{ inset:0 auto auto 50%; width:auto; max-width:none; height:calc(100dvh * 16 / 9 * var(--art-ratio)); transform:translateX(-50%); }
-    .res-card-wrap, .rc-flip, .res-actions--bar{ display:none; }
+    .res-card-wrap, .res-actions--bar{ display:none; }
     .res-wide{ display:flex; }
     .start-scrim, .start-spark, .quiz-scrim-top, .quiz-scrim-bottom{ display:none; }
     .q-body{ flex:none; }
@@ -622,6 +626,7 @@
               <div class="card-art" id="rc-back-art"></div>
             </div>
           </div>
+          <button class="rc-flip js-flip" aria-label="翻轉卡片" title="翻轉卡片"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.5-5.8L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.5 5.8L4 15.5"/><path d="M4 20v-4.5h4.5"/></svg></button>
         </div>
       </div>
 
@@ -657,11 +662,6 @@
           </div>
         </div>
       </div>
-
-      <button class="rc-flip js-flip">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.5-5.8L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.5 5.8L4 15.5"/><path d="M4 20v-4.5h4.5"/></svg>
-        翻轉卡片
-      </button>
 
       <canvas id="res-sparkle"></canvas>
       <div class="res-actions res-actions--bar">
@@ -1448,7 +1448,10 @@
       if(down && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) moved = true;
       lean(e);
     });
-    scene.addEventListener('pointerup', function(){ if(down && !moved) flip(); down = false; reset(); });
+    scene.addEventListener('pointerup', function(e){
+      if(down && !moved && !e.target.closest('.rc-flip')) flip();   // 點到右上角的圖示時，交給圖示自己的 click 翻面
+      down = false; reset();
+    });
     scene.addEventListener('pointercancel', function(){ down = false; reset(); });
     scene.addEventListener('pointerleave', function(){ if(!down) reset(); });
     bindAll('.js-flip', flip);
