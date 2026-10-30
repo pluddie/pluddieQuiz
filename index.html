@@ -221,12 +221,13 @@
   .progress-line-fill{
     position:absolute; top:50%; left:2%; height:2px; width:0%;
     background:var(--gold); transform:translateY(-50%); border-radius:2px;
-    transition:width .3s ease;
+    transition:width .45s ease;
   }
   .progress-star{
     position:absolute; top:50%; width:13px; height:13px;
-    transform:translate(-50%,-50%); transition:opacity .3s ease, transform .3s ease;
+    transform:translate(-50%,-50%); transition:opacity .4s ease, transform .4s ease, filter .4s ease;
   }
+  .progress-line-wrap.no-anim *{ transition:none !important; }   /* 第一次顯示時直接到定位，不要從上一輪的位置滑回來 */
   .progress-star.todo{ opacity:.4; }
   .progress-star.now{ opacity:1; transform:translate(-50%,-50%) scale(1.35); filter:drop-shadow(0 0 5px rgba(227,174,83,.85)); }
 
@@ -251,26 +252,34 @@
   .opt-btn{
     position:relative;
     text-align:left; font-size:12px; line-height:1.4;
-    color:var(--parchment); background:var(--block-bg);
+    color:#fff; background:var(--block-bg);
     border:none; border-radius:14px; min-height:44px;
     padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:8px;
-    transition:transform .12s, opacity .4s ease;
+    transition:transform .12s;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .opt-btn::after{
     content:''; position:absolute; inset:0; border-radius:inherit;
-    background:linear-gradient(90deg, #2f8f8a, #5be0ff);
+    background:linear-gradient(90deg, #2a8a84, #3b95b5);   /* 白字放得上去的藍綠漸層（比原本亮青色那端深一點，字才看得清楚） */
     opacity:0; transition:opacity .9s ease; pointer-events:none; z-index:0;
   }
+  .opt-btn > *{ position:relative; z-index:1; }
+  .opt-btn[hidden]{ display:none; }   /* 圖示與文字永遠在漸層的前面，不會被蓋住 */
   @media (hover:hover){
-    .opt-btn:hover::after{ opacity:.85; }
+    .opt-btn:hover::after{ opacity:.9; }
   }
   .opt-btn:active{ transform:scale(.97); }
-  /* 點下去之後：選到的那顆慢慢亮起藍綠色，其他的輕輕變淡，讓使用者知道選到哪一個 */
-  .opt-btn.chosen{ color:#fff; }
-  .opt-btn.chosen::after{ background:linear-gradient(90deg, #2a8a84, #3aa0b8); opacity:1; transition:opacity .5s ease; }
-  .options.has-choice .opt-btn:not(.chosen){ opacity:.5; }
-  .opt-btn > *{ position:relative; z-index:1; }
+  /* 點選項：手指按住時、按下去的瞬間，亮起跟電腦版滑過去一樣的藍綠漸層，接著馬上換題（不停格、其他選項都不變） */
+  .opt-btn:active::after, .opt-btn.chosen::after{ opacity:.9; }
+  .opt-btn:active::after{ transition-duration:.15s; }
+  .opt-btn.chosen::after{ transition:none; }
+  .opt-btn.releasing::after{ transition:opacity .25s ease; }   /* 換題時，亮色很快淡掉 */
+  /* 換題：頁面結構一樣，所以只有「會變的東西」在動 —— 進度條的星星與線滑到新位置、背景圖交叉淡入、
+     題目與選項的文字就地淡出再淡入；選項按鈕、版面都不動，整個畫面不會閃一下 */
+  .q-text, .opt-btn > span:last-child, #q-index{ transition:opacity .16s ease, transform .16s ease; }
+  .quiz-overlay.swapping .q-text{ opacity:0; transform:translateY(6px); }
+  .quiz-overlay.swapping .opt-btn > span:last-child{ opacity:0; transform:translateY(4px); }
+  .quiz-overlay.swapping #q-index{ opacity:0; }
   .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
 
   /* ---------- 結果畫面 ---------- */
@@ -535,6 +544,7 @@
   @media (prefers-reduced-motion:reduce){
     .screen{ transition:none; }
     .start-text > *, .start-cta > *{ animation:none; }
+    .q-text, .opt-btn > span:last-child, #q-index, .progress-line-fill, .progress-star{ transition:none; }
     .fleck, .ca-spark, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:none; }
   }
 </style>
@@ -590,7 +600,7 @@
         <div class="media-wrap" id="quiz-media-wrap">
           <div class="media-placeholder" id="quiz-placeholder"></div>
         </div>
-        <div class="quiz-overlay">
+        <div class="quiz-overlay" id="quiz-overlay">
           <div class="quiz-scrim-top"></div>
           <div class="quiz-scrim-bottom"></div>
 
@@ -687,11 +697,9 @@
   "use strict";
 
   /* ---------------- 首頁背景：依序嘗試 mp4 → gif/webp/jpg/jpeg/png，載入第一個存在的檔案 ---------------- */
-  var IMG_EXTS = ['gif', 'webp', 'jpg', 'jpeg', 'png'];
-
   function buildMediaCandidates(basePath){
     var list = [{type:'video', src: basePath + '.mp4'}];
-    IMG_EXTS.forEach(function(ext){ list.push({type:'image', src: basePath + '.' + ext}); });
+    ['gif', 'webp', 'jpg', 'jpeg', 'png'].forEach(function(ext){ list.push({type:'image', src: basePath + '.' + ext}); });
     return list;
   }
 
@@ -733,12 +741,6 @@
     findMedia(urls.map(function(u){ return { type:'image', src:u }; }), done);
   }
 
-  /* 把載入好的背景放進容器，並移除斜紋佔位 */
-  function mountMedia(wrap, placeholder, media){
-    if(placeholder.parentNode) placeholder.remove();
-    wrap.insertBefore(media, wrap.firstChild);
-  }
-
   /* ---------------- 漂浮光點（純裝飾，整個畫面共用同一層） ---------------- */
   (function initFlecks(){
     var box = document.getElementById('flecks');
@@ -761,7 +763,8 @@
     findMedia(buildMediaCandidates('img/hero'), function(media){
       if(!media) return;
       media.alt = '魔法森林入口';
-      mountMedia(wrap, placeholder, media);
+      placeholder.remove();                       /* 拿掉斜紋佔位，換上背景 */
+      wrap.insertBefore(media, wrap.firstChild);
     });
   })();
 
@@ -791,7 +794,7 @@
   var LIONS = {
     'moon-sustain-fantasy-explore':{
       name:'占星術獅', tagline:['觀察星星與命運','預測今天晚餐吃什麼'],
-      desc:['你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情。你常常在別人都覺得無聊的時刻，獨自捕捉到那些細微的美好。或許是一片落葉的飄落、或是夜空雲層的形狀，都能讓你在心裡上演一場壯麗的宇宙小劇場。',
+      desc:['你是一個充滿想像力的人，喜歡坐在星空下研究那些沒有人能證明的事情。你常常在別人都覺得無聊的時刻，獨自捕捉到那些細微的美好。',
             '大家都笑你是個不切實際的浪漫主義者，但其實你只是比誰都還要溫柔地對待這個世界。你深信所有的巧合都是安排，即使沒有人能解釋原因，你仍願意追尋那些只有自己看得見的奇妙連結。'],
       tags:['浪漫觀測家','靈感收藏家'],
       stats:{social:3, action:3, imagination:10, adventure:8}, rarity:12,
@@ -807,7 +810,7 @@
     },
     'light-sustain-analysis-guardian':{
       name:'蘑菇治療獅', tagline:['從百種蘑菇製作解方','需要幫助的人都會找你'],
-      desc:['你喜歡在森林角落研究各種蘑菇，總能第一時間發現身邊人的小小需要。你總是在大家忙著向前奔跑的時候，默默注意到落在隊伍最後的那個人。你不說太肉麻的安慰，只是遞上一杯熱茶或一個眼神，告訴對方「你不用勉強自己裝堅強」。',
+      desc:['你有著研磨蘑菇藥劑的神秘魔法，總能第一時間發現身邊人的小小需要。在大家忙著向前奔跑的時候，你總能注意到落在隊伍最後的那個人。你不擅長說太肉麻的安慰，但能淡淡的讓對方知道「你不用勉強自己裝堅強」。',
             '比起說出漂亮的話，更喜歡默默準備一份剛剛好的陪伴。在別人眼中，你好像永遠都是那個安穩、可靠、隨時都在的避風港。你習慣把溫柔留給世界，留給自己的常常只是一個懂事的微笑。'],
       tags:['溫柔藥劑師','默默陪伴'],
       stats:{social:3, action:4, imagination:4, adventure:5}, rarity:13,
@@ -816,7 +819,7 @@
     'light-burst-fantasy-guardian':{
       name:'光芒四射獅', tagline:['走到哪裡都自帶光芒','現場氣氛的開關'],
       desc:['你總是在森林需要力量的時候出現，帶來笑聲和勇氣。只要有你在的地方，空氣彷彿就會自動嗨起來。你總是把最明亮的一面展現給大家，用燦爛的笑容把所有陰霾擋在門外，彷彿這世上沒有任何難關可以把你打倒。',
-            '你習慣成為那個「沒問題，我們一起想辦法」的人，並相信快樂和希望可以傳遞，因此總努力把自己的光分享出去。你就像是大家的太陽，只要你在，黑夜就永遠只是暫時的風景。'],
+            '你習慣成為那個「沒問題，我們一起想辦法」的人，並相信快樂和希望可以傳遞，因此總努力把光分享出去。你就像是大家的太陽，只要你在，黑夜就永遠只是暫時的風景。'],
       tags:['自帶小太陽','氣氛製造機'],
       stats:{social:10, action:8, imagination:7, adventure:4}, rarity:4,
       attract:['森林回音獅','煙火魔法獅'], clash:['占星術獅','蘑菇治療獅']
@@ -824,14 +827,14 @@
     'light-sustain-fantasy-guardian':{
       name:'獨角獸溝通獅', tagline:['從蝸牛到獨角獸都認識','一路聊天聊到天黑'],
       desc:['你是一個善於理解他人的人，喜歡傾聽不同的故事，也總能發現那些藏在沉默裡的小心思。你有著神奇的魔力，就算是防備心最強的人，在你面前也會不知不覺卸下心防。因為你從不用世俗的眼光去評判別人，而是溫柔地接住每一種奇特的靈魂。',
-            '你相信沒有人是真的奇怪，只是還沒有遇見懂自己語言的人。大家都喜歡找你吐苦水，因為你知道怎麼把冰冷的話語，揉成最柔軟的理解送回對方心裡。'],
+            '你相信沒有人是真的奇怪，只是還沒遇見懂自己語言的人。大家都喜歡找你吐苦水，因為你知道怎麼把冰冷的話語，揉成最柔軟的理解送回對方心裡。'],
       tags:['靈魂翻譯機','森林外交官'],
       stats:{social:9, action:3, imagination:8, adventure:5}, rarity:10,
       attract:['露珠安眠獅','軟綿綿棉花獅'], clash:['雷光疾行獅','時光魔法獅']
     },
     'moon-burst-fantasy-explore':{
       name:'彩虹調色獅', tagline:['隨身攜帶彩虹色票','隨著心情揮灑顏色'],
-      desc:['你總是帶著一本彩虹色票到處旅行，替世界補上缺少的顏色。你的腦子裡永遠裝著無厘頭的點子和繽紛的想像，無法忍受一成不變的死板生活。對你來說，連走同一條路回家都可以像是一場微小的冒險，只要換個心情，風景就完全不同。',
+      desc:['你總是帶著一本彩虹色票旅行，替世界補上缺少的顏色。你的腦子裡永遠裝著無厘頭的點子和繽紛的想像，無法忍受一成不變的死板生活。對你來說，連走同一條路回家都可以像是一場微小的冒險，只要換個心情，風景就完全不同。',
             '有時候大家會覺得你跳脫得讓人抓不住規律，但就是這股不受拘束的靈氣，為身邊的人帶來了無盡的驚喜。你用自己的方式在對抗世界的灰暗，把日子過得像一幅色彩斑斕的畫。'],
       tags:['藝術家靈魂','把日常刷成冒險'],
       stats:{social:5, action:8, imagination:10, adventure:10}, rarity:9,
@@ -864,7 +867,7 @@
     'moon-burst-analysis-explore':{
       name:'時光魔法獅', tagline:['穿梭昨天與明天','最常用來找弄丟的東西'],
       desc:['你常常在森林裡尋找消失的時間碎片，腦海裡彷彿有一座巨大的編年史圖書館，隨時都在歸納過去的經驗與細節。你很難完全放下過去發生過的事，因為那些都是你拼湊這個世界邏輯的重要拼圖。',
-            '對你來說，回憶跟歷史才不是用來懷念的，是用來挖寶跟找線索的！只要發現哪裡怪怪的，你眼裡就會瞬間閃過興奮的光芒，立刻捲起袖子把昨天翻個底朝天，勢必要把答案抓回來。'],
+            '對你來說，回憶跟歷史才不是用來懷念的，是用來挖寶跟找線索的！只要發現哪裡不對勁，你眼裡就會瞬間閃過興奮的光芒，想立刻捲起袖子把答案抓出來。'],
       tags:['昨天放哪了','等等我想一下'],
       stats:{social:3, action:5, imagination:4, adventure:7}, rarity:7,
       attract:['彩虹調色獅','雷光疾行獅'], clash:['獨角獸溝通獅','露珠安眠獅']
@@ -879,8 +882,8 @@
     },
     'light-burst-analysis-guardian':{
       name:'森林回音獅', tagline:['自帶喇叭的說話音量','顯得特別有道理'],
-      desc:['你說的每句話，都會在森林裡迴盪很久。即使只是分享今天午餐吃了什麼，也會聽起來像一場重要宣言。你的聲音天生帶有一種振奮人心的磁場，總能精準說進別人的心坎裡。你從不害怕成為公眾焦點，只要是認為對的事，你就會大聲而自信地為它發聲。',
-            '大家都依賴你關鍵時刻挺身而出的魄力與正義感。當大家都選擇沉默、有所顧慮時，你總是願意站出來，把大家的委屈與夢想，用無畏的勇氣喊成一首迴盪在森林裡、無人能忽視的壯麗回音。'],
+      desc:['你說的每句話，都會在森林裡迴盪很久。即使只是分享今天午餐吃了什麼，也會聽起來像一場重要宣言。你的聲音天生帶有一種振奮人心的磁場，總能精準說進別人的心坎裡。',
+            '當大家都選擇沉默、有所顧慮時，你總是願意站出來，把大家的委屈與夢想，用無畏的勇氣喊成一首迴盪在森林裡、無人能忽視的壯麗回音。你從不害怕成為公眾焦點，只要是認為對的事，你就會大聲而自信地為它發聲。'],
       tags:['自帶擴音器','很有道理的樣子'],
       stats:{social:10, action:8, imagination:4, adventure:2}, rarity:2,
       attract:['光芒四射獅','蘑菇治療獅'], clash:['占星術獅','露珠安眠獅']
@@ -912,22 +915,28 @@
     shell.classList.toggle('on-front', name === 'start' || name === 'quiz');
   }
 
-  /* ---------------- 直線＋星星進度條 ---------------- */
+  /* ---------------- 直線＋星星進度條：只建一次，之後只改位置與樣式，所以星星與線會滑過去 ---------------- */
   var progressTrack = document.getElementById('progress-track');
-  function renderProgress(){
-    var n = QUESTIONS.length;
-    var fillPct = n > 1 ? (idx/(n-1))*96 : 0;
-    var html = '<div class="progress-line-bg"></div>';
-    html += '<div class="progress-line-fill" style="width:'+fillPct+'%"></div>';
-    for(var i=0;i<n;i++){
-      var cls = i < idx ? 'done' : (i===idx ? 'now' : 'todo');
+  var progressFill = null, progressStars = [];
+  (function buildProgress(){
+    var n = QUESTIONS.length, html = '<div class="progress-line-bg"></div><div class="progress-line-fill"></div>';
+    for(var i = 0; i < n; i++){
       var pct = n > 1 ? 2 + (i/(n-1))*96 : 50;
-      html += '<svg class="progress-star '+cls+'" style="left:'+pct+'%" viewBox="0 0 24 24">'+
-        '<use href="#sparkleShape" fill="var(--gold)"/></svg>';
+      html += '<svg class="progress-star todo" style="left:'+pct+'%" viewBox="0 0 24 24"><use href="#sparkleShape" fill="var(--gold)"/></svg>';
     }
     progressTrack.innerHTML = html;
-    document.getElementById('q-index').textContent = Math.min(idx+1, n);
+    progressFill = progressTrack.querySelector('.progress-line-fill');
+    progressStars = [].slice.call(progressTrack.querySelectorAll('.progress-star'));
     document.getElementById('q-total').textContent = n;
+  })();
+
+  function renderProgress(instant){
+    var n = QUESTIONS.length;
+    if(instant) progressTrack.classList.add('no-anim');
+    progressFill.style.width = (n > 1 ? (idx/(n-1))*96 : 0) + '%';
+    progressStars.forEach(function(s, i){ s.setAttribute('class', 'progress-star ' + (i < idx ? 'done' : (i === idx ? 'now' : 'todo'))); });
+    document.getElementById('q-index').textContent = Math.min(idx+1, n);
+    if(instant){ void progressTrack.offsetWidth; progressTrack.classList.remove('no-anim'); }
   }
 
   /* ---------------- 每題全螢幕背景圖（固定用 jpg）：先預載接下來幾題，圖準備好才讓題目浮現 ---------------- */
@@ -942,17 +951,31 @@
     return qImages[n];
   }
 
-  /* 把第 qNum 題的背景放進畫面，放好（或 2.5 秒還沒好）就呼叫 done；同時開始預載後面兩題 */
+  /* 拿掉背景容器裡的圖片（keep 是要留下的那一張） */
+  function clearBackgrounds(keep){
+    [].slice.call(quizMediaWrap.querySelectorAll('img')).forEach(function(el){ if(el !== keep) el.remove(); });
+  }
+
+  /* 新的背景圖疊在舊的上面慢慢淡入（交叉淡化），淡完再把舊的拿掉；這一題沒有圖的話，舊圖拿掉、顯示斜紋 */
+  function showBackground(img, qNum){
+    if(img.naturalWidth){
+      img.alt = '第 ' + qNum + ' 題場景';
+      if(quizPlaceholder.parentNode) quizPlaceholder.remove();
+      quizMediaWrap.appendChild(img);
+      var token = qLoadToken;
+      setTimeout(function(){ if(token === qLoadToken) clearBackgrounds(img); }, 650);
+    } else {
+      clearBackgrounds(null);
+      quizMediaWrap.appendChild(quizPlaceholder);
+    }
+  }
+
+  /* 第 qNum 題的背景準備好（或等了 2.5 秒）就換上並呼叫 done；同時開始預載後面兩題 */
   function loadQuestionMedia(qNum, done){
     var token = ++qLoadToken, finished = false, img = questionImage(qNum);
-    quizMediaWrap.innerHTML = '';
-    quizMediaWrap.appendChild(quizPlaceholder);
     function finish(){ if(!finished){ finished = true; done(); } }
     function settle(){
-      if(token === qLoadToken && img.naturalWidth){
-        img.alt = '第 ' + qNum + ' 題場景';
-        mountMedia(quizMediaWrap, quizPlaceholder, img);
-      }
+      if(token === qLoadToken) showBackground(img, qNum);
       questionImage(qNum + 1); questionImage(qNum + 2);
       finish();
     }
@@ -965,49 +988,72 @@
 
   /* ---------------- 渲染題目 ---------------- */
   var qText = document.getElementById('q-text');
-  var qOptions = document.getElementById('q-options');
-  var OPTION_STAR_ICON = '<svg viewBox="0 0 24 24"><use href="#sparkleShape" fill="var(--gold)"/></svg>';
+  var quizOverlay = document.getElementById('quiz-overlay');
 
   var isTransitioning = false;
 
-  function renderQuestion(done){
+  /* 4 個選項按鈕只建一次（每題都是 4 個選項），換題時只換文字，按鈕本身不會消失再出現 */
+  var optBtns = [], optLabels = [];
+  (function buildOptions(){
+    for(var i = 0; i < 4; i++){
+      (function(i){
+        var btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerHTML = '<span class="opt-glyph"><svg viewBox="0 0 24 24"><use href="#sparkleShape" fill="var(--gold)"/></svg></span><span></span>';
+        btn.addEventListener('click', function(){ pick(QUESTIONS[idx].opts[i].attrs, btn); });
+        document.getElementById('q-options').appendChild(btn);
+        optBtns.push(btn); optLabels.push(btn.lastElementChild);
+      })(i);
+    }
+  })();
+
+  function fillQuestion(){
     var item = QUESTIONS[idx];
-    if(!item){ done(); return; } /* 防呆：idx 不小心超出範圍時，安靜地不做任何事，不要整頁壞掉 */
-    renderProgress();
-    loadQuestionMedia(idx+1, done);
+    if(!item) return;   /* 防呆：idx 不小心超出範圍時，安靜地不做任何事，不要整頁壞掉 */
     qText.innerHTML = item.q;
-    qOptions.innerHTML = '';
-    qOptions.classList.remove('has-choice');
-    item.opts.forEach(function(o){
-      var btn = document.createElement('button');
-      btn.className = 'opt-btn';
-      btn.innerHTML = '<span class="opt-glyph">'+OPTION_STAR_ICON+'</span><span>'+o.t+'</span>';
-      btn.addEventListener('click', function(){ pick(o.attrs, btn); });
-      qOptions.appendChild(btn);
+    optBtns.forEach(function(btn, i){
+      btn.hidden = !item.opts[i];
+      if(item.opts[i]) optLabels[i].textContent = item.opts[i].t;
+    });
+  }
+
+  /* 換題時，剛剛點到的那顆亮色很快淡掉 */
+  function clearChoice(){
+    optBtns.forEach(function(btn){
+      if(!btn.classList.contains('chosen')) return;
+      btn.classList.add('releasing');
+      btn.classList.remove('chosen');
+      setTimeout(function(){ btn.classList.remove('releasing'); }, 300);
+    });
+  }
+
+  /* 顯示目前這一題。animate=false（剛進入題目頁）：直接放好；
+     animate=true（題與題之間）：進度條滑動、背景交叉淡入，同時文字就地淡出→換字→淡入 */
+  function showQuestion(animate, done){
+    loadQuestionMedia(idx+1, function(){
+      if(!animate){
+        renderProgress(true); fillQuestion(); clearChoice();
+        if(done) done();
+        return;
+      }
+      renderProgress();
+      quizOverlay.classList.add('swapping');
+      setTimeout(function(){
+        fillQuestion(); clearChoice();
+        quizOverlay.classList.remove('swapping');
+        if(done) done();
+      }, 160);
     });
   }
 
   function transitionToQuestion(){
     isTransitioning = true;
-    var content = document.getElementById('quiz-content');
-    content.classList.add('fading');
-    setTimeout(function(){
-      renderQuestion(function(){
-        requestAnimationFrame(function(){
-          content.classList.remove('fading');
-          isTransitioning = false;
-        });
-      });
-    }, 220);
+    showQuestion(true, function(){ isTransitioning = false; });
   }
 
-  var CHOICE_MS = 650;   /* 點下選項後，讓選到的那顆慢慢亮起來，停這麼久才換下一題 */
-
   function pick(attrs, btn){
-    if(isTransitioning) return;           /* 亮色動畫、題目切換期間，不理會重複點擊，避免計分/題目錯亂 */
-    isTransitioning = true;
-    btn.classList.add('chosen');
-    qOptions.classList.add('has-choice');
+    if(isTransitioning) return;           /* 換題的淡出動畫期間，不理會重複點擊，避免計分/題目錯亂 */
+    btn.classList.add('chosen');          /* 立刻亮起漸層色，接著馬上換題，不停格 */
 
     var prev = answers[idx];
     if(prev){ prev.forEach(function(a){ scores[a.attr] -= a.pts; }); }
@@ -1015,10 +1061,8 @@
     answers[idx] = attrs;
     idx++;
 
-    setTimeout(function(){
-      if(idx >= QUESTIONS.length){ isTransitioning = false; startMagic(); return; }
-      transitionToQuestion();             /* 淡出 → 換題 → 淡入，結束時會把 isTransitioning 放開 */
-    }, CHOICE_MS);
+    if(idx >= QUESTIONS.length){ startMagic(); return; }
+    transitionToQuestion();
   }
 
   function goBack(){
@@ -1480,13 +1524,17 @@
     if(e.target.closest && e.target.closest('.media-wrap, .res-card-wrap, .rw-stage, .rw-rel-thumb, .magic-stage')) e.preventDefault();
   });
 
+  /* iPhone 的 Safari 要有 touchstart 監聽，手指按住時的 :active 樣式（選項亮色）才會生效 */
+  document.addEventListener('touchstart', function(){}, { passive:true });
+
   /* ---------------- 事件 ---------------- */
   document.getElementById('btn-start').addEventListener('click', function(){
     resetQuiz();
     var content = document.getElementById('quiz-content');
     content.classList.add('fading');
+    quizMediaWrap.innerHTML = ''; quizMediaWrap.appendChild(quizPlaceholder);   /* 重新開始時，不要殘留上一輪最後一題的背景 */
     showScreen('quiz');
-    renderQuestion(function(){ content.classList.remove('fading'); });
+    showQuestion(false, function(){ content.classList.remove('fading'); });
   });
   document.getElementById('btn-back').addEventListener('click', goBack);
 
