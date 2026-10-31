@@ -83,6 +83,8 @@
   .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
   #quiz-media-wrap img{ animation-duration:var(--bg-fade-ms, .8s); }   /* 題目背景換圖：交叉淡入的時間 */
   #hero-media-wrap{ background:var(--forest); }
+  #hero-media-wrap .hero-video{ animation:none; opacity:0; transition:opacity .8s ease; }   /* 準備好之前是透明的；一般的「插入時淡入」動畫會把它強制變成不透明，所以這支影片不用 */
+  #hero-media-wrap .hero-video.live{ opacity:1; }
   .media-placeholder{
     position:absolute; inset:0;
     background:var(--stripes);
@@ -296,11 +298,12 @@
   }
   /* 換題：新的題目與 4 個選項「一條一條」慢慢浮出來（跟首頁同一種效果，但快很多）；
      用 backwards：動畫結束後就不再接管 transform，按下去的縮放效果才不會被蓋掉 */
-  .rise-in{ animation:riseIn var(--rise-ms, .45s) ease backwards; animation-delay:calc(var(--rise-delay, 0ms) + var(--i, 0) * var(--rise-gap, 90ms)); }
+  .rise-in{ animation:quizRise var(--rise-ms, .75s) cubic-bezier(.22, .61, .36, 1) backwards; animation-delay:calc(var(--rise-delay, 0ms) + var(--i, 0) * var(--rise-gap, 120ms)); }
+  @keyframes quizRise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }   /* 比首頁的浮出來移動少、更柔和 */
   /* 舊的題目與選項留一份副本在原地慢慢淡出（點到的那顆晚一點才淡，顏色多停一下），新的同時一條一條浮出來 → 無痕銜接，沒有停格 */
   .q-ghost{ position:absolute !important; margin:0 !important; pointer-events:none; z-index:3; }
-  .q-ghost .q-text, .q-ghost .opt-btn{ animation:ghostOut var(--out-ms, .45s) ease both; }
-  .q-ghost .opt-btn.chosen{ animation-delay:var(--keep-ms, .18s); }
+  .q-ghost .q-text, .q-ghost .opt-btn{ animation:ghostOut var(--out-ms, .26s) ease-out both; }
+  .q-ghost .opt-btn.chosen{ animation-delay:var(--keep-ms, .12s); }
   @keyframes ghostOut{ from{ opacity:1; } to{ opacity:0; } }
   .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
 
@@ -721,49 +724,24 @@
 (function(){
   "use strict";
 
-  /* ---------------- 首頁背景：依序嘗試 mp4 → gif/webp/jpg/jpeg/png，載入第一個存在的檔案 ---------------- */
-  function buildMediaCandidates(basePath){
-    var list = [{type:'video', src: basePath + '.mp4'}];
-    ['gif', 'webp', 'jpg', 'jpeg', 'png'].forEach(function(ext){ list.push({type:'image', src: basePath + '.' + ext}); });
-    return list;
-  }
-
-  /* 同時載入清單裡所有候選檔案（不用一個一個等 404），但依清單順序挑第一個存在的；全部都沒有就回傳 null。
+  /* 依序（同時）載入一串候選圖片，依清單順序挑第一張存在的；全部都沒有就回傳 null（不用一個一個等 404）。
      所以同一張圖請只放一種格式，舊的大檔案不要留著，不然會被一起下載。 */
-  function findMedia(list, done){
+  function findImage(urls, done){
     var results = [], finished = false;
     function settle(){
       if(finished) return;
-      for(var i = 0; i < list.length; i++){
+      for(var i = 0; i < urls.length; i++){
         if(results[i] === undefined) return;            /* 順位較前面的還在載入，先等它 */
         if(results[i]){ finished = true; done(results[i]); return; }
       }
       finished = true; done(null);
     }
-    list.forEach(function(c, i){
-      var el;
-      function ok(){ if(results[i] === undefined){ results[i] = el; settle(); } }
-      function fail(){ if(results[i] === undefined){ results[i] = null; settle(); } }
-      if(c.type === 'video'){
-        el = document.createElement('video');
-        el.muted = true; el.playsInline = true; el.loop = true; el.autoplay = true;
-        el.setAttribute('muted', ''); el.setAttribute('playsinline', ''); el.setAttribute('webkit-playsinline', '');
-        el.addEventListener('loadeddata', function(){ ok(); if(results[i] === el) el.play().catch(function(){}); });
-        el.addEventListener('error', fail);
-        setTimeout(fail, 3000);      /* 影片 3 秒內沒準備好（太大或手機擋住預載），就改用後面的圖片，不讓畫面一直空著 */
-        el.src = c.src;
-        el.load();
-      } else {
-        el = new Image();
-        el.addEventListener('load', ok);
-        el.addEventListener('error', fail);
-        el.src = c.src;
-      }
+    urls.forEach(function(u, i){
+      var img = new Image();
+      img.addEventListener('load', function(){ if(results[i] === undefined){ results[i] = img; settle(); } });
+      img.addEventListener('error', function(){ if(results[i] === undefined){ results[i] = null; settle(); } });
+      img.src = u;
     });
-  }
-
-  function findImage(urls, done){
-    findMedia(urls.map(function(u){ return { type:'image', src:u }; }), done);
   }
 
   /* ---------------- 漂浮光點（純裝飾，整個畫面共用同一層） ---------------- */
@@ -781,15 +759,41 @@
     }
   })();
 
-  /* ---------------- 起始頁 Hero 圖片/影片載入 ---------------- */
+  /* ---------------- 起始頁 Hero：mp4 影片（沒有的話用圖片） ----------------
+     手機瀏覽器對影片很挑剔，所以：
+     1. 影片一開始就放進畫面（先透明）。沒放進畫面的影片，iPhone 常常根本不會去載入、也不會自動播放。
+     2. 圖片（gif/webp/jpg/jpeg/png，有放才有）同時載入，當作影片出現前的底圖；影片準備好（拿到第一個畫面）才淡入蓋過去，
+        不會因為網路慢就放棄影片（以前 3 秒沒好就放棄，改用圖片）。
+     3. 自動播放被擋住（省電模式、設定「減少動態」等）時，使用者第一次碰螢幕就補播放。 */
   (function initHeroMedia(){
     var wrap = document.getElementById('hero-media-wrap');
     var placeholder = document.getElementById('hero-placeholder');
-    findMedia(buildMediaCandidates('img/hero'), function(media){
-      if(!media) return;
-      media.alt = '魔法森林入口';
-      placeholder.remove();                       /* 拿掉斜紋佔位，換上背景 */
-      wrap.insertBefore(media, wrap.firstChild);
+
+    var video = document.createElement('video');
+    video.className = 'hero-video';
+    video.muted = true; video.loop = true; video.autoplay = true; video.playsInline = true; video.preload = 'auto';
+    ['muted', 'playsinline', 'webkit-playsinline'].forEach(function(a){ video.setAttribute(a, ''); });
+    video.addEventListener('error', function(){ video.remove(); });                       /* 沒有 hero.mp4：拿掉，改看圖片 */
+    video.addEventListener('loadeddata', function(){                                      /* 拿到第一個畫面：淡入（就算還沒開始播，也先看到第一格） */
+      placeholder.remove();
+      video.classList.add('live');
+      play();
+    });
+    function play(){
+      var p = video.play();
+      if(p && p.catch) p.catch(function(){});             /* 被擋住就算了，下面的第一次觸碰會再試 */
+    }
+    ['pointerdown', 'touchstart', 'keydown'].forEach(function(t){
+      document.addEventListener(t, function(){ if(video.paused) play(); }, { once:true, passive:true });
+    });
+    video.src = 'img/hero.mp4';
+    wrap.insertBefore(video, wrap.firstChild);
+
+    findImage(['gif', 'webp', 'jpg', 'jpeg', 'png'].map(function(e){ return 'img/hero.' + e; }), function(img){
+      if(!img) return;
+      img.alt = '魔法森林入口';
+      placeholder.remove();
+      wrap.insertBefore(img, wrap.firstChild);            /* 放在最前面＝在影片的下面，影片淡入時會蓋過它 */
     });
   })();
 
@@ -1019,11 +1023,11 @@
 
   /* 動畫時間（毫秒），CSS 也會讀這些數字：
      INK_MS＝手機點下去後，漸層從手指的位置暈開的時間；
-     OUT_MS／KEEP_MS＝舊的題目與選項淡出的時間，以及點到的那顆多停留（顏色多留一下）的時間；
-     RISE_DELAY／RISE_MS／RISE_GAP＝新題目與選項一條一條浮出來：第一條晚多久開始、每條的時間、每條之間的間隔；
+     OUT_MS／KEEP_MS＝舊的題目與選項淡出的時間（快），以及點到的那顆多停留（顏色多留一下）的時間；
+     RISE_DELAY／RISE_MS／RISE_GAP＝新題目與選項慢慢、一條一條柔和地浮出來：第一條晚多久開始、每條的時間（慢）、每條之間的間隔；
      BG_FADE_MS＝背景圖交叉淡入 */
-  var INK_MS = 450, OUT_MS = 450, KEEP_MS = 180, RISE_DELAY = 150, RISE_MS = 450, RISE_GAP = 80, BG_FADE_MS = 800;
-  var LOCK_MS = 650;      /* 換題後這麼久之內不接受新的點擊（動畫還在交接）；使用者這時還在讀新題目，不會感覺到 */
+  var INK_MS = 360, OUT_MS = 260, KEEP_MS = 120, RISE_DELAY = 140, RISE_MS = 750, RISE_GAP = 120, BG_FADE_MS = 1000;
+  var LOCK_MS = 600;      /* 換題後這麼久之內不接受新的點擊（動畫還在交接）；使用者這時還在讀新題目，不會感覺到 */
   var rootStyle = document.documentElement.style;
   var cssTimes = { '--ink-ms':INK_MS, '--out-ms':OUT_MS, '--keep-ms':KEEP_MS, '--rise-delay':RISE_DELAY, '--rise-ms':RISE_MS, '--rise-gap':RISE_GAP, '--bg-fade-ms':BG_FADE_MS };
   Object.keys(cssTimes).forEach(function(k){ rootStyle.setProperty(k, cssTimes[k] + 'ms'); });
