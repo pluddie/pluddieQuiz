@@ -81,6 +81,7 @@
   }
   @keyframes mediaIn{ from{ opacity:0; } to{ opacity:1; } }
   .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:mediaIn .5s ease both; }
+  #quiz-media-wrap img{ animation-duration:var(--bg-fade-ms, .8s); }   /* 題目背景換圖：交叉淡入的時間 */
   #hero-media-wrap{ background:var(--forest); }
   .media-placeholder{
     position:absolute; inset:0;
@@ -221,11 +222,11 @@
   .progress-line-fill{
     position:absolute; top:50%; left:2%; height:2px; width:0%;
     background:var(--gold); transform:translateY(-50%); border-radius:2px;
-    transition:width .45s ease;
+    transition:width .6s ease;
   }
   .progress-star{
     position:absolute; top:50%; width:13px; height:13px;
-    transform:translate(-50%,-50%); transition:opacity .4s ease, transform .4s ease, filter .4s ease;
+    transform:translate(-50%,-50%); transition:opacity .55s ease, transform .55s ease, filter .55s ease;
   }
   .progress-line-wrap.no-anim *{ transition:none !important; }   /* 第一次顯示時直接到定位，不要從上一輪的位置滑回來 */
   .progress-star.todo{ opacity:.4; }
@@ -258,28 +259,43 @@
     transition:transform .12s;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .opt-btn::after{
+  .opt-btn::after{   /* 藍綠漸層：平常看不見；滑過去（電腦）或點下去（手機）才慢慢出現。深一點的藍綠，白字才看得清楚 */
     content:''; position:absolute; inset:0; border-radius:inherit;
-    background:linear-gradient(90deg, #2a8a84, #3b95b5);   /* 白字放得上去的藍綠漸層（比原本亮青色那端深一點，字才看得清楚） */
+    background:linear-gradient(90deg, #2a8a84, #3b95b5);
     opacity:0; transition:opacity .9s ease; pointer-events:none; z-index:0;
   }
-  .opt-btn > *{ position:relative; z-index:1; }
-  .opt-btn[hidden]{ display:none; }   /* 圖示與文字永遠在漸層的前面，不會被蓋住 */
-  @media (hover:hover){
-    .opt-btn:hover::after{ opacity:.9; }
-  }
+  .opt-btn > *{ position:relative; z-index:1; }   /* 圖示與文字永遠在漸層的前面，字色也不會變 */
+  .opt-btn[hidden]{ display:none; }
+  .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
   .opt-btn:active{ transform:scale(.97); }
-  /* 點選項：手指按住時、按下去的瞬間，亮起跟電腦版滑過去一樣的藍綠漸層，接著馬上換題（不停格、其他選項都不變） */
-  .opt-btn:active::after, .opt-btn.chosen::after{ opacity:.9; }
-  .opt-btn:active::after{ transition-duration:.15s; }
-  .opt-btn.chosen::after{ transition:none; }
-  .opt-btn.releasing::after{ transition:opacity .25s ease; }   /* 換題時，亮色很快淡掉 */
-  /* 換題：頁面結構一樣，所以只有「會變的東西」在動 —— 進度條的星星與線滑到新位置、背景圖交叉淡入、
-     題目與選項的文字就地淡出再淡入；選項按鈕、版面都不動，整個畫面不會閃一下 */
-  .q-text, .opt-btn > span:last-child, #q-index{ transition:opacity .16s ease, transform .16s ease; }
-  .quiz-overlay.swapping .q-text{ opacity:0; transform:translateY(6px); }
-  .quiz-overlay.swapping .opt-btn > span:last-child{ opacity:0; transform:translateY(4px); }
-  .quiz-overlay.swapping #q-index{ opacity:0; }
+  @media (hover:hover){ .opt-btn:hover::after{ opacity:1; } }        /* 電腦：滑過去，漸層慢慢出現 */
+  .opt-btn.chosen::after{ opacity:1; transition:opacity var(--choice-ms, .4s) ease; }   /* 點下去：整條亮起來，一直停到換題 */
+  /* 手機沒有「滑過去」：點下去之後，藍綠漸層像墨水在水裡暈開，從手指點的地方向四周慢慢渲染開來，
+     邊緣是柔和羽化的（沒有硬邊）；用 mask 讓漸層「顯影」：mask 是一團中間實、四周漸漸消失的圓，從點的位置慢慢放大到蓋滿整條。
+     --tx / --ty＝點的位置，--d＝最後的圓的直徑，都由 JavaScript 在點下去時算好 */
+  @media (hover:none){
+    .opt-btn.chosen::after{
+      opacity:1; transition:none;
+      -webkit-mask-image:radial-gradient(circle closest-side, #000 0, #000 50%, transparent 100%);
+      mask-image:radial-gradient(circle closest-side, #000 0, #000 50%, transparent 100%);
+      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+      animation:optInk var(--choice-ms, .65s) cubic-bezier(.4, .2, .6, .9) both;   /* 緩動接近等速：整個過程都看得到慢慢擴散，不會一下就蓋滿 */
+    }
+  }
+  @keyframes optInk{
+    from{
+      -webkit-mask-size:0 0; mask-size:0 0;
+      -webkit-mask-position:var(--tx) var(--ty); mask-position:var(--tx) var(--ty);
+    }
+    to{
+      -webkit-mask-size:var(--d) var(--d); mask-size:var(--d) var(--d);
+      -webkit-mask-position:calc(var(--tx) - var(--d) / 2) calc(var(--ty) - var(--d) / 2);
+      mask-position:calc(var(--tx) - var(--d) / 2) calc(var(--ty) - var(--d) / 2);
+    }
+  }
+  /* 換題：新的題目與 4 個選項「一條一條」慢慢浮出來（跟首頁同一種效果，但快很多）；
+     用 backwards：動畫結束後就不再接管 transform，按下去的縮放效果才不會被蓋掉 */
+  .rise-in{ animation:riseIn var(--rise-ms, .45s) ease backwards; animation-delay:calc(var(--i, 0) * var(--rise-gap, .09s)); }
   .opt-glyph{ flex-shrink:0; width:13px; height:13px; opacity:.9; }
 
   /* ---------- 結果畫面 ---------- */
@@ -287,12 +303,12 @@
      卡片大小隨視窗縮放、形狀跟著圖片比例走，所以不會裁切；手指拖過去會傾斜，點一下或按「翻轉卡片」翻面 */
   .res-card-wrap{
     flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
-    padding:calc(12px + env(safe-area-inset-top)) 0 4px;
+    padding:calc(12px + env(safe-area-inset-top)) 0 0;
     perspective:1100px; touch-action:none;
   }
   .rc-tilt{
     position:relative;
-    width:min(95vw, calc((100dvh - 90px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--rc-ratio, .5625)));   /* 90px ＝ 下面兩顆按鈕所佔的高度加一點呼吸空間，其餘都留給卡片 */
+    width:min(97vw, calc((100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * var(--rc-ratio, .5625)));   /* 72px ＝ 下面兩顆按鈕那一排的高度加一點點空隙，其餘都留給卡片 */
     aspect-ratio:var(--rc-ratio, .5625);
     transform-style:preserve-3d;
     transform:rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
@@ -431,6 +447,7 @@
     position:relative; z-index:6; flex-shrink:0; display:flex; justify-content:center; align-items:center; gap:12px;
     padding:12px 22px calc(16px + env(safe-area-inset-bottom));
   }
+  .res-actions--bar{ padding-top:8px; }   /* 手機：卡片和下面兩顆按鈕之間靠近一點 */
   .res-actions--panel{ margin-top:22px; padding:0; }
   .btn-ghost, .btn-share{
     flex:0 0 auto; padding:7px 14px; border:1px solid #fff; border-radius:999px;
@@ -544,7 +561,8 @@
   @media (prefers-reduced-motion:reduce){
     .screen{ transition:none; }
     .start-text > *, .start-cta > *{ animation:none; }
-    .q-text, .opt-btn > span:last-child, #q-index, .progress-line-fill, .progress-star{ transition:none; }
+    .rise-in, .opt-btn.chosen::after{ animation:none; }
+    .progress-line-fill, .progress-star{ transition:none; }
     .fleck, .ca-spark, .rc-tilt, .rw-card, .media-wrap img, .media-wrap video, .rc-face img, .ca-lion img, .ca-lion canvas, .rw-rel-thumb img{ animation:none; }
   }
 </style>
@@ -600,7 +618,7 @@
         <div class="media-wrap" id="quiz-media-wrap">
           <div class="media-placeholder" id="quiz-placeholder"></div>
         </div>
-        <div class="quiz-overlay" id="quiz-overlay">
+        <div class="quiz-overlay">
           <div class="quiz-scrim-top"></div>
           <div class="quiz-scrim-bottom"></div>
 
@@ -850,8 +868,8 @@
     },
     'light-burst-fantasy-explore':{
       name:'煙火魔法獅', tagline:['見義勇為的小鞭炮','激動的時候會炸出小火花'],
-      desc:['你總是在森林遇到危機時第一個衝出去。你的血液裡好像永遠流淌著沸騰的熱血，只要認準了目標或是看見不公義的事，你絕對第一個挺身而出，完全顧不上自己會不會受傷。',
-            '你的情緒像煙火一樣直接，開心或生氣都藏不住。你的喜怒哀樂全寫在臉上，像夏夜最燦爛卻也最真實的煙火，燒得轟轟烈烈。雖然有時候會把自己弄得滿身是傷，但這種毫無保留的生命力，正是大家最羨慕你的地方。'],
+      desc:['你總是在森林遇到危機時第一個衝出去。你的血液裡好像永遠流淌著沸騰的熱血，只要認準了目標或是看見不公義的事情，你絕對第一個挺身而出，完全顧不上自己會不會受傷。',
+            '你的情緒像煙火一樣直接，開心或生氣都藏不住。你的喜怒哀樂全寫在臉上，像夏夜最燦爛卻也最真實的煙火，燒得轟轟烈烈。雖然有時候會把自己弄得遍體鱗傷，但這種毫無保留的生命力，正是大家最羨慕你的地方。'],
       tags:['燃燒吧','嫉惡如仇'],
       stats:{social:9, action:10, imagination:8, adventure:5}, rarity:9,
       attract:['光芒四射獅','雷光疾行獅'], clash:['落葉收藏獅','軟綿綿棉花獅']
@@ -963,7 +981,7 @@
       if(quizPlaceholder.parentNode) quizPlaceholder.remove();
       quizMediaWrap.appendChild(img);
       var token = qLoadToken;
-      setTimeout(function(){ if(token === qLoadToken) clearBackgrounds(img); }, 650);
+      setTimeout(function(){ if(token === qLoadToken) clearBackgrounds(img); }, BG_FADE_MS + 100);
     } else {
       clearBackgrounds(null);
       quizMediaWrap.appendChild(quizPlaceholder);
@@ -988,9 +1006,19 @@
 
   /* ---------------- 渲染題目 ---------------- */
   var qText = document.getElementById('q-text');
-  var quizOverlay = document.getElementById('quiz-overlay');
+  qText.style.setProperty('--i', 0);
 
   var isTransitioning = false;
+
+  /* 動畫時間（毫秒），CSS 也會讀這些數字：
+     CHOICE_MS＝點下選項後，漸層慢慢暈開到蓋滿整條、再換題的時間；RISE_MS／RISE_GAP＝新題目與選項一條一條浮出來，每條的時間與間隔；
+     BG_FADE_MS＝背景圖交叉淡入 */
+  var CHOICE_MS = 650, RISE_MS = 450, RISE_GAP = 90, BG_FADE_MS = 800;
+  var rootStyle = document.documentElement.style;
+  rootStyle.setProperty('--choice-ms', CHOICE_MS + 'ms');
+  rootStyle.setProperty('--rise-ms', RISE_MS + 'ms');
+  rootStyle.setProperty('--rise-gap', RISE_GAP + 'ms');
+  rootStyle.setProperty('--bg-fade-ms', BG_FADE_MS + 'ms');
 
   /* 4 個選項按鈕只建一次（每題都是 4 個選項），換題時只換文字，按鈕本身不會消失再出現 */
   var optBtns = [], optLabels = [];
@@ -1000,8 +1028,9 @@
         var btn = document.createElement('button');
         btn.className = 'opt-btn';
         btn.innerHTML = '<span class="opt-glyph"><svg viewBox="0 0 24 24"><use href="#sparkleShape" fill="var(--gold)"/></svg></span><span></span>';
-        btn.addEventListener('click', function(){ pick(QUESTIONS[idx].opts[i].attrs, btn); });
+        btn.addEventListener('click', function(e){ pick(QUESTIONS[idx].opts[i].attrs, btn, e); });
         document.getElementById('q-options').appendChild(btn);
+        btn.style.setProperty('--i', i + 1);   /* 浮出來的順序：題目是 0，選項依序 1～4 */
         optBtns.push(btn); optLabels.push(btn.lastElementChild);
       })(i);
     }
@@ -1017,43 +1046,49 @@
     });
   }
 
-  /* 換題時，剛剛點到的那顆亮色很快淡掉 */
   function clearChoice(){
-    optBtns.forEach(function(btn){
-      if(!btn.classList.contains('chosen')) return;
-      btn.classList.add('releasing');
-      btn.classList.remove('chosen');
-      setTimeout(function(){ btn.classList.remove('releasing'); }, 300);
-    });
+    optBtns.forEach(function(btn){ btn.classList.remove('chosen'); });
   }
 
-  /* 顯示目前這一題。animate=false（剛進入題目頁）：直接放好；
-     animate=true（題與題之間）：進度條滑動、背景交叉淡入，同時文字就地淡出→換字→淡入 */
-  function showQuestion(animate, done){
+  /* 讓題目與 4 個選項重新「一條一條」浮出來（拿掉 class、強制重排、再加回去，動畫才會重播） */
+  function restartRise(){
+    var els = [qText].concat(optBtns);
+    els.forEach(function(el){ el.classList.remove('rise-in'); });
+    void qText.offsetWidth;
+    els.forEach(function(el){ el.classList.add('rise-in'); });
+  }
+
+  /* 顯示目前這一題：背景準備好（或等了 2.5 秒）後，換上新的背景（交叉淡入）、進度條滑到新位置、
+     題目與選項換成新的內容並一條一條浮出來。instant=true（剛進入題目頁）時進度條直接到定位 */
+  function showQuestion(instant, done){
     loadQuestionMedia(idx+1, function(){
-      if(!animate){
-        renderProgress(true); fillQuestion(); clearChoice();
-        if(done) done();
-        return;
-      }
-      renderProgress();
-      quizOverlay.classList.add('swapping');
-      setTimeout(function(){
-        fillQuestion(); clearChoice();
-        quizOverlay.classList.remove('swapping');
-        if(done) done();
-      }, 160);
+      renderProgress(instant);
+      fillQuestion(); clearChoice(); restartRise();
+      if(done) done();
     });
   }
 
   function transitionToQuestion(){
     isTransitioning = true;
-    showQuestion(true, function(){ isTransitioning = false; });
+    showQuestion(false, function(){ isTransitioning = false; });
   }
 
-  function pick(attrs, btn){
-    if(isTransitioning) return;           /* 換題的淡出動畫期間，不理會重複點擊，避免計分/題目錯亂 */
-    btn.classList.add('chosen');          /* 立刻亮起漸層色，接著馬上換題，不停格 */
+  /* 算出「墨水」從哪裡開始暈開、最後要多大才蓋得住整顆按鈕（手機點下去的效果用；鍵盤按 Enter 時從正中間開始） */
+  function startInk(btn, e){
+    var r = btn.getBoundingClientRect(), keyboard = !e || (!e.clientX && !e.clientY);
+    var tx = keyboard ? r.width / 2 : Math.max(0, Math.min(r.width, e.clientX - r.left));
+    var ty = keyboard ? r.height / 2 : Math.max(0, Math.min(r.height, e.clientY - r.top));
+    var farthest = Math.hypot(Math.max(tx, r.width - tx), Math.max(ty, r.height - ty));
+    btn.style.setProperty('--tx', tx + 'px');
+    btn.style.setProperty('--ty', ty + 'px');
+    btn.style.setProperty('--d', (farthest * 2 / 0.5) + 'px');   /* 圓的實心部分（半徑的 50%）剛好蓋到最遠的角落，外圍 50% 是柔和的羽化 */
+  }
+
+  function pick(attrs, btn, e){
+    if(isTransitioning) return;           /* 顏色暈開、換題的期間，不理會重複點擊，避免計分/題目錯亂 */
+    isTransitioning = true;
+    startInk(btn, e);
+    btn.classList.add('chosen');          /* 漸層從這顆開始慢慢暈開（手機從點的位置、電腦接著滑過去的顏色），期間顏色一直在 */
 
     var prev = answers[idx];
     if(prev){ prev.forEach(function(a){ scores[a.attr] -= a.pts; }); }
@@ -1061,8 +1096,10 @@
     answers[idx] = attrs;
     idx++;
 
-    if(idx >= QUESTIONS.length){ startMagic(); return; }
-    transitionToQuestion();
+    setTimeout(function(){
+      if(idx >= QUESTIONS.length){ isTransitioning = false; startMagic(); return; }
+      transitionToQuestion();
+    }, CHOICE_MS);
   }
 
   function goBack(){
@@ -1534,7 +1571,7 @@
     content.classList.add('fading');
     quizMediaWrap.innerHTML = ''; quizMediaWrap.appendChild(quizPlaceholder);   /* 重新開始時，不要殘留上一輪最後一題的背景 */
     showScreen('quiz');
-    showQuestion(false, function(){ content.classList.remove('fading'); });
+    showQuestion(true, function(){ content.classList.remove('fading'); });
   });
   document.getElementById('btn-back').addEventListener('click', goBack);
 
